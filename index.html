@@ -11,6 +11,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="NoName">
 <link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" href="favicon.png">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
@@ -831,23 +832,48 @@ function loadVoices(){
     ssel.value=appSettings.voiceIndex;
   }
 }
-// Thử nhiều lần để đảm bảo voices được load trên mobile
+// Load voices - xử lý đặc biệt cho Android Chrome
 if(typeof speechSynthesis!=='undefined'){
-  speechSynthesis.onvoiceschanged=loadVoices;
+  // Android: voices chỉ có sau khi onvoiceschanged fire
+  speechSynthesis.onvoiceschanged=()=>{
+    loadVoices();
+    // Cập nhật select "Đang tải giọng..." nếu đang hiển thị
+    const ssel=document.getElementById('setting-voice-sel');
+    if(ssel && voices.length && ssel.options[0] && ssel.options[0].text.includes('tải')){
+      loadVoices();
+    }
+  };
+  // Thử ngay và retry nhiều lần cho các trình duyệt khác nhau
   loadVoices();
-  setTimeout(loadVoices,200);
-  setTimeout(loadVoices,1000);
-  setTimeout(loadVoices,3000);
+  [200,500,1000,2000,4000].forEach(t=>setTimeout(()=>{
+    if(!voices.length) loadVoices();
+    // Nếu vẫn không có giọng sau 4s, hiện thông báo thay vì "đang tải"
+    if(t===4000){
+      const ssel=document.getElementById('setting-voice-sel');
+      if(ssel && (!voices.length || (ssel.options[0] && ssel.options[0].text.includes('tải')))){
+        if(!voices.length){
+          ssel.innerHTML='<option>Không tìm thấy giọng đọc</option>';
+        } else {
+          loadVoices();
+        }
+      }
+    }
+  },t));
 }
 function setVoice(){ const i=document.getElementById('voice-sel').value; selVoice=voices[i]||null; }
 function setRate(){ selRate=parseFloat(document.getElementById('rate-sel').value); }
 function speak(text){
   if(!text) return;
   speechSynthesis.cancel();
+  // Nếu chưa có voices, thử load lại trước khi speak
+  if(!voices.length) loadVoices();
   const u=new SpeechSynthesisUtterance(text);
+  u.lang='en-US';
+  u.rate=selRate;
   if(selVoice) u.voice=selVoice;
-  u.rate=selRate; u.lang='en-US';
-  speechSynthesis.speak(u);
+  else if(voices.length) u.voice=voices[0];
+  // Android Chrome fix: dùng setTimeout tránh bị cancel
+  setTimeout(()=>speechSynthesis.speak(u), 50);
 }
 
 // ═══════════════════════════════════════════
