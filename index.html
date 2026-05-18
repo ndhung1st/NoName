@@ -864,16 +864,27 @@ function setVoice(){ const i=document.getElementById('voice-sel').value; selVoic
 function setRate(){ selRate=parseFloat(document.getElementById('rate-sel').value); }
 function speak(text){
   if(!text) return;
-  speechSynthesis.cancel();
-  setTimeout(()=>{
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'en-US';
-    u.rate = selRate;
-    u.pitch = 1;
-    u.volume = 1;
-    // KHÔNG set u.voice - để hệ thống tự chọn giọng en-US tốt nhất
-    speechSynthesis.speak(u);
-  }, 100);
+  // Thử Cambridge Dictionary MP3 trước (giọng chuẩn British/American)
+  const word = text.trim().toLowerCase().split(' ')[0]; // lấy từ đầu tiên
+  const cambridgeUrl = `https://dictionary.cambridge.org/media/english/us_pron/${word[0]}/${word.slice(0,3)}/${word}.mp3`;
+  const audio = new Audio(cambridgeUrl);
+  audio.playbackRate = selRate;
+  audio.play().catch(()=>{
+    // Fallback: thử Oxford
+    const oxfordUrl = `https://www.oxfordlearnersdictionaries.com/media/english/us_pron/${word[0]}/${word.slice(0,3)}/${word}__us_1.mp3`;
+    const audio2 = new Audio(oxfordUrl);
+    audio2.playbackRate = selRate;
+    audio2.play().catch(()=>{
+      // Fallback cuối: Web Speech API
+      speechSynthesis.cancel();
+      setTimeout(()=>{
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'en-US';
+        u.rate = selRate;
+        speechSynthesis.speak(u);
+      }, 100);
+    });
+  });
 }
 
 // ═══════════════════════════════════════════
