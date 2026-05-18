@@ -423,7 +423,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:20p
     <div style="padding:14px 0;border-bottom:1px solid var(--border)">
       <div style="font-size:13px;font-weight:700;margin-bottom:8px">Giọng đọc</div>
       <select id="setting-voice-sel" onchange="saveSettings();setVoiceFromSettings()" style="background:var(--surf2);border:1px solid var(--border);border-radius:var(--rs);padding:8px 12px;color:var(--text);font-size:13px;font-family:'Sora',sans-serif;outline:none;width:100%;max-width:400px">
-        <option>Đang tải giọng...</option>
+        <option value="-1">🔊 Giọng mặc định hệ thống</option>
       </select>
     </div>
 
@@ -827,9 +827,14 @@ function loadVoices(){
   }
   // Also sync settings selector if open
   const ssel=document.getElementById('setting-voice-sel');
-  if(ssel&&voices.length){
-    ssel.innerHTML=voices.map((v,i)=>`<option value="${i}">${v.name} (${v.lang})</option>`).join('');
-    ssel.value=appSettings.voiceIndex;
+  if(ssel){
+    const defaultOpt='<option value="-1">🔊 Giọng mặc định hệ thống</option>';
+    if(voices.length){
+      ssel.innerHTML=defaultOpt+voices.map((v,i)=>`<option value="${i}">${v.name} (${v.lang})</option>`).join('');
+      ssel.value=appSettings.voiceIndex;
+    } else {
+      ssel.innerHTML=defaultOpt;
+    }
   }
 }
 // Load voices - xử lý đặc biệt cho Android Chrome
@@ -865,14 +870,12 @@ function setRate(){ selRate=parseFloat(document.getElementById('rate-sel').value
 function speak(text){
   if(!text) return;
   speechSynthesis.cancel();
-  // Nếu chưa có voices, thử load lại trước khi speak
-  if(!voices.length) loadVoices();
   const u=new SpeechSynthesisUtterance(text);
   u.lang='en-US';
   u.rate=selRate;
-  if(selVoice) u.voice=selVoice;
-  else if(voices.length) u.voice=voices[0];
-  // Android Chrome fix: dùng setTimeout tránh bị cancel
+  // Chỉ set voice nếu không phải "mặc định hệ thống"
+  if(appSettings.voiceIndex>=0 && selVoice) u.voice=selVoice;
+  // Android Chrome fix
   setTimeout(()=>speechSynthesis.speak(u), 50);
 }
 
@@ -2588,12 +2591,12 @@ function saveSettings(){
 }
 
 function setVoiceFromSettings(){
-  const i = parseInt(document.getElementById('setting-voice-sel').value)||0;
-  selVoice = voices[i]||null;
-  appSettings.voiceIndex = i;
+  const i = parseInt(document.getElementById('setting-voice-sel').value);
+  appSettings.voiceIndex = isNaN(i)?-1:i;
+  selVoice = (appSettings.voiceIndex>=0)?voices[appSettings.voiceIndex]||null:null;
   // sync voice-sel in words tab
   const vsel = document.getElementById('voice-sel');
-  if(vsel) vsel.value = i;
+  if(vsel) vsel.value = appSettings.voiceIndex;
   saveSettings();
 }
 
