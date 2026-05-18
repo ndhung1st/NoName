@@ -1,0 +1,3165 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FlashLearn</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#7c6af7">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="FlashLearn">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#f8f8fc;--surf:#ffffff;--surf2:#f0f0f8;--surf3:#e4e4f0;--surf4:#d8d8ec;
+  --accent:#7c6af7;--a2:#f7706a;--a3:#4fd1b5;--a4:#d4920a;
+  --text:#1a1a2e;--text2:#5a5a80;--text3:#9090b0;--border:#e0e0f0;
+  --green:#16a34a;--red:#dc2626;--blue:#2563eb;
+  --r:14px;--rs:9px;
+  --lv0:#dc2626;--lv1:#d4920a;--lv2:#2563eb;--lv3:#16a34a;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--surf3);border-radius:3px}
+
+.glow-a{position:fixed;top:-200px;left:-100px;width:600px;height:600px;background:radial-gradient(circle,rgba(124,106,247,.06) 0%,transparent 70%);pointer-events:none;z-index:0}
+.glow-b{position:fixed;bottom:-200px;right:-100px;width:500px;height:500px;background:radial-gradient(circle,rgba(247,112,106,.04) 0%,transparent 70%);pointer-events:none;z-index:0}
+
+#app{position:relative;z-index:1;max-width:1020px;margin:0 auto;padding:0 18px 80px}
+
+header{display:flex;align-items:center;justify-content:space-between;padding:20px 0 14px;border-bottom:1px solid var(--border);margin-bottom:22px;gap:10px;flex-wrap:wrap}
+.logo{font-size:21px;font-weight:800;letter-spacing:-.5px;cursor:pointer}
+.logo span{color:var(--accent)}.logo em{color:var(--a2);font-style:normal}
+.hstats{display:flex;gap:16px}
+.hstat{font-size:11px;color:var(--text2);text-align:center}
+.hstat b{display:block;font-size:16px;font-weight:800;font-family:'Space Mono',monospace;color:var(--text)}
+
+.tabs{display:flex;gap:4px;background:var(--surf);border-radius:var(--r);padding:5px;border:1px solid var(--border);margin-bottom:22px;overflow-x:auto}
+.tab{flex:1;min-width:70px;padding:8px 4px;border:none;cursor:pointer;border-radius:var(--rs);font-size:11px;font-weight:700;font-family:'Sora',sans-serif;transition:all .2s;background:transparent;color:var(--text2);white-space:nowrap}
+.tab:hover{background:var(--surf2);color:var(--text)}.tab.active{background:var(--accent);color:#fff}
+.tab .ico{display:block;font-size:14px;margin-bottom:2px}
+
+.sec{display:none;animation:fu .3s ease}.sec.active{display:block}
+@keyframes fu{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+.btn{padding:10px 22px;border-radius:var(--rs);font-family:'Sora',sans-serif;font-size:13px;font-weight:700;cursor:pointer;border:none;transition:all .2s;letter-spacing:.2px}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:#8f7ef9;transform:translateY(-1px)}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text2)}.btn-ghost:hover{border-color:var(--accent);color:var(--text)}
+.btn-danger{background:transparent;border:1px solid rgba(248,113,113,.3);color:var(--red)}.btn-danger:hover{background:rgba(248,113,113,.1)}
+.btn-sm{padding:6px 14px;font-size:12px}
+.btn-icon{width:32px;height:32px;padding:0;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:14px;background:var(--surf3);border:1px solid var(--border);cursor:pointer;transition:all .15s;color:var(--text2)}
+.btn-icon:hover{background:var(--surf4);color:var(--text)}
+
+.lv{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.5px}
+.lv0{background:rgba(248,113,113,.12);color:var(--lv0);border:1px solid rgba(248,113,113,.2)}
+.lv1{background:rgba(249,199,79,.12);color:var(--lv1);border:1px solid rgba(249,199,79,.2)}
+.lv2{background:rgba(96,165,250,.12);color:var(--lv2);border:1px solid rgba(96,165,250,.2)}
+.lv3{background:rgba(74,222,128,.12);color:var(--lv3);border:1px solid rgba(74,222,128,.2)}
+
+.mem-bar{height:3px;border-radius:2px;margin-top:6px;background:var(--surf3);overflow:hidden}
+.mem-fill{height:100%;border-radius:2px;transition:width .4s}
+
+.form-box{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);padding:20px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px}
+.fg{display:flex;flex-direction:column;gap:5px}
+.fg label{font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.8px;text-transform:uppercase}
+.fg input,.fg select,.fg textarea{background:var(--surf2);border:1px solid var(--border);border-radius:var(--rs);padding:9px 12px;color:var(--text);font-family:'Sora',sans-serif;font-size:13px;outline:none;transition:border-color .2s}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--accent)}
+.fg textarea{resize:none;height:64px}
+.fg select option{background:var(--surf2)}
+
+.search-bar{display:flex;gap:8px;margin-bottom:14px;align-items:center}
+.search-inp{flex:1;background:var(--surf);border:1px solid var(--border);border-radius:var(--rs);padding:9px 14px;color:var(--text);font-family:'Sora',sans-serif;font-size:13px;outline:none;transition:border-color .2s}
+.search-inp:focus{border-color:var(--accent)}
+.filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.pill{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text2);font-family:'Sora',sans-serif;transition:all .15s}
+.pill:hover{border-color:var(--accent);color:var(--accent)}.pill.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* ── FILE EXPLORER ── */
+.explorer{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.explorer-toolbar{display:flex;gap:8px;padding:12px 14px;border-bottom:1px solid var(--border);flex-wrap:wrap;align-items:center}
+.explorer-path{display:flex;align-items:center;gap:4px;padding:8px 14px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2);overflow-x:auto;white-space:nowrap}
+.path-seg{cursor:pointer;color:var(--accent);font-weight:600}.path-seg:hover{text-decoration:underline}
+.path-sep{color:var(--text3);margin:0 2px}
+.explorer-content{min-height:300px;padding:8px}
+.explorer-select-bar{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2);flex-wrap:wrap}
+
+/* Folder/file rows */
+.expl-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--rs);cursor:pointer;transition:background .15s;border:1px solid transparent;user-select:none;border-bottom:1px solid var(--border)!important;border-radius:0}
+.expl-row:last-child{border-bottom:none!important}
+.expl-row:hover{background:var(--surf2)}
+.expl-row.selected{background:rgba(124,106,247,.10);border-color:rgba(124,106,247,.3)}
+.expl-row .expl-ico{font-size:18px;flex-shrink:0;width:24px;text-align:center}
+.expl-row .expl-name{flex:1;font-size:13px;font-weight:600}
+.expl-row .expl-meta{font-size:11px;color:var(--text2);margin-left:auto;flex-shrink:0;text-align:right}
+.expl-row .expl-prog{font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;background:var(--surf3);color:var(--text2)}
+.expl-row .expl-actions{display:flex;gap:4px;flex-shrink:0;opacity:0;transition:opacity .15s}
+.expl-row:hover .expl-actions{opacity:1}
+.expl-checkbox{width:16px;height:16px;cursor:pointer;accent-color:var(--accent);flex-shrink:0}
+
+/* Word grid (inside explorer) */
+.word-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;margin-bottom:20px}
+.wcard{background:var(--surf2);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;position:relative;transition:all .2s}
+.wcard:hover{border-color:var(--surf4);transform:translateY(-2px)}
+.wcard.selected{border-color:var(--accent);background:rgba(124,106,247,.07)}
+.wcard-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
+.wcard-en{font-size:17px;font-weight:800;color:var(--text)}
+.wcard-actions{display:flex;gap:4px;flex-shrink:0}
+.wcard-ph{font-size:11px;color:var(--accent);font-family:'Space Mono',monospace;margin-bottom:4px}
+.wcard-vi{font-size:13px;color:var(--text2);margin-bottom:8px}
+.wcard-ex{font-size:11px;color:var(--text3);font-style:italic;border-top:1px solid var(--border);padding-top:7px;line-height:1.5}
+.wcard-footer{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+.due-badge{font-size:10px;color:var(--a4);font-weight:600}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+.modal{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);padding:24px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;animation:fu .2s ease}
+.modal h2{font-size:17px;font-weight:800;margin-bottom:18px}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+
+.toast{position:fixed;bottom:24px;right:24px;z-index:2000;background:var(--surf2);border:1px solid var(--border);border-radius:var(--rs);padding:12px 18px;font-size:13px;font-weight:600;animation:slideIn .2s ease;max-width:320px}
+@keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+.dash-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:24px}
+.dash-card{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);padding:18px;text-align:center}
+.dash-card .big{font-size:36px;font-weight:800;font-family:'Space Mono',monospace;margin-bottom:4px}
+.dash-card .lbl{font-size:12px;color:var(--text2)}
+.lv-dist{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:24px}
+.lv-dist-item{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);padding:14px 18px;display:flex;align-items:center;gap:12px}
+.lv-dist-n{font-size:28px;font-weight:800;font-family:'Space Mono',monospace}
+.lv-dist-info .name{font-size:13px;font-weight:700}.lv-dist-info .sub{font-size:11px;color:var(--text2);margin-top:2px}
+.due-section{background:var(--surf);border:1px solid var(--a4);border-radius:var(--r);padding:18px;margin-bottom:20px}
+.due-section h3{font-size:14px;font-weight:700;color:var(--a4);margin-bottom:12px}
+
+.prog-bar{height:4px;background:var(--surf3);border-radius:2px;overflow:hidden;margin-bottom:16px}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--a3));border-radius:2px;transition:width .4s}
+
+.fc-scene{width:100%;max-width:560px;height:300px;perspective:1400px;cursor:pointer;margin:0 auto}
+.fc-inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform .55s cubic-bezier(.4,0,.2,1)}
+.fc-inner.flipped{transform:rotateY(180deg)}
+.fc-face{position:absolute;width:100%;height:100%;backface-visibility:hidden;border-radius:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center}
+.fc-front{background:linear-gradient(135deg,#ffffff,#f0f0f8);border:2px solid var(--accent);box-shadow:0 0 30px rgba(124,106,247,.08),0 10px 30px rgba(0,0,0,.08)}
+.fc-back{background:linear-gradient(135deg,#f0fff8,#e8f8f4);border:2px solid var(--a3);box-shadow:0 0 30px rgba(79,209,181,.08),0 10px 30px rgba(0,0,0,.08);transform:rotateY(180deg)}
+.fc-hint{font-size:10px;color:var(--text2);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
+.fc-word{font-size:40px;font-weight:800;letter-spacing:-1px;margin-bottom:6px}
+.fc-ph{font-size:16px;color:var(--accent);font-family:'Space Mono',monospace;margin-bottom:10px}
+.fc-meaning{font-size:26px;font-weight:700;margin-bottom:8px}
+.fc-ex{font-size:13px;color:var(--text2);font-style:italic;line-height:1.6}
+.fc-controls{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap}
+.fc-btn{width:52px;height:52px;border-radius:50%;border:2px solid var(--border);background:var(--surf);cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.fc-btn:hover{transform:scale(1.1)}.fc-btn.ok{border-color:var(--green)}.fc-btn.ok:hover{background:rgba(74,222,128,.1)}
+.fc-btn.bad{border-color:var(--red)}.fc-btn.bad:hover{background:rgba(248,113,113,.1)}
+.fc-btn.nav{border-color:var(--border)}.fc-btn.nav:hover{background:var(--surf2)}
+
+.qz-box{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);padding:28px;text-align:center;margin-bottom:18px}
+.qz-q{font-size:30px;font-weight:800;margin-bottom:6px}
+.qz-sub{font-size:13px;color:var(--text2);font-style:italic}
+.qz-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.qz-opt{background:var(--surf);border:2px solid var(--border);border-radius:var(--rs);padding:14px 16px;cursor:pointer;font-size:14px;font-weight:600;text-align:center;transition:all .2s;font-family:'Sora',sans-serif;color:var(--text)}
+.qz-opt:hover:not(.dis){border-color:var(--accent);background:rgba(124,106,247,.07)}
+.qz-opt.cor{border-color:var(--green);background:rgba(74,222,128,.1);color:var(--green)}
+.qz-opt.wrg{border-color:var(--red);background:rgba(248,113,113,.1);color:var(--red)}
+.qz-opt.dis{cursor:default}
+.fb{text-align:center;padding:12px;border-radius:var(--rs);font-weight:700;font-size:14px;margin-bottom:14px;animation:fu .2s ease}
+.fb.cor{background:rgba(74,222,128,.1);color:var(--green)}.fb.wrg{background:rgba(248,113,113,.1);color:var(--red)}
+
+.match-row-label{font-size:10px;font-weight:700;color:var(--text2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px}
+.match-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.mc{flex:1;min-width:120px;background:var(--surf);border:2px solid var(--border);border-radius:var(--rs);padding:12px 10px;cursor:pointer;text-align:center;font-size:13px;font-weight:600;transition:all .2s;line-height:1.3;min-height:56px;display:flex;align-items:center;justify-content:center}
+.mc:hover:not(.matched):not(.sel){border-color:var(--accent);background:rgba(124,106,247,.06)}
+.mc.sel{border-color:var(--a4);background:rgba(249,199,79,.08);color:var(--a4)}
+.mc.matched{border-color:var(--green);background:rgba(74,222,128,.07);color:var(--green);opacity:.55;cursor:default}
+.mc.shake{animation:shk .35s ease;border-color:var(--red)}
+@keyframes shk{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+
+.wr-prompt{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);padding:28px;text-align:center;margin-bottom:16px}
+.wr-vi{font-size:26px;font-weight:800;margin-bottom:6px}
+.wr-inp{width:100%;background:var(--surf);border:2px solid var(--border);border-radius:var(--rs);padding:14px 18px;font-size:20px;font-weight:700;color:var(--text);font-family:'Sora',sans-serif;outline:none;text-align:center;transition:border-color .2s}
+.wr-inp:focus{border-color:var(--accent)}.wr-inp.cor{border-color:var(--green);color:var(--green)}.wr-inp.wrg{border-color:var(--red);color:var(--red)}
+.wr-letters{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;margin:12px 0}
+.wl{width:34px;height:40px;background:var(--surf2);border:1px solid var(--border);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s}
+.wl:hover{border-color:var(--accent);background:rgba(124,106,247,.08)}.wl.used{opacity:.25;cursor:default;pointer-events:none}
+
+.mode-start{text-align:center;padding:40px 20px}
+.mode-start h2{font-size:24px;font-weight:800;margin-bottom:8px}
+.mode-start p{font-size:14px;color:var(--text2);margin-bottom:28px;line-height:1.6}
+.mode-opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px;max-width:700px;margin-left:auto;margin-right:auto}
+.mode-opt{background:var(--surf);border:2px solid var(--border);border-radius:var(--r);padding:18px 14px;cursor:pointer;transition:all .2s;text-align:center}
+.mode-opt:hover{border-color:var(--accent)}.mode-opt.on{border-color:var(--accent);background:rgba(124,106,247,.07)}
+.mode-opt .ico{font-size:28px;margin-bottom:8px}.mode-opt .name{font-size:13px;font-weight:700}.mode-opt .desc{font-size:11px;color:var(--text2);margin-top:3px}
+
+.learn-steps{display:flex;gap:0;margin-bottom:24px;border-radius:var(--r);overflow:hidden;border:1px solid var(--border)}
+.lstep{flex:1;padding:10px 6px;text-align:center;font-size:11px;font-weight:700;color:var(--text3);background:var(--surf);border-right:1px solid var(--border);transition:all .3s;position:relative}
+.lstep:last-child{border-right:none}
+.lstep.done{color:var(--green);background:rgba(74,222,128,.05)}
+.lstep.active{color:var(--text);background:var(--surf2)}.lstep.active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--accent)}
+.lstep .sico{display:block;font-size:16px;margin-bottom:2px}
+
+.res-wrap{text-align:center;padding:40px 20px}
+.res-emoji{font-size:60px;margin-bottom:12px}
+.res-score{font-size:64px;font-weight:800;font-family:'Space Mono',monospace;color:var(--accent);margin-bottom:4px}
+.res-bd{display:flex;gap:28px;justify-content:center;margin:20px 0 28px}
+.rb{text-align:center}.rb .n{font-size:28px;font-weight:800;font-family:'Space Mono',monospace}.rb .l{font-size:11px;color:var(--text2);margin-top:3px}
+
+.voice-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;padding:10px 14px;background:var(--surf);border:1px solid var(--border);border-radius:var(--rs)}
+.voice-bar label{font-size:11px;color:var(--text2);font-weight:600}
+.voice-bar select{background:var(--surf2);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text);font-size:12px;font-family:'Sora',sans-serif;outline:none}
+
+.sec-title{font-size:20px;font-weight:800;margin-bottom:16px}
+.sec-title span{color:var(--accent)}
+
+.import-box{border:2px dashed var(--border);border-radius:var(--r);padding:32px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:14px}
+.import-box:hover,.import-box.drag{border-color:var(--accent);background:rgba(124,106,247,.04)}
+.import-box .ico{font-size:36px;margin-bottom:8px}
+.import-box p{font-size:13px;color:var(--text2)}
+.import-box small{font-size:11px;color:var(--text3)}
+
+.empty{text-align:center;padding:50px 20px;color:var(--text2)}.empty .ico{font-size:40px;margin-bottom:10px}.empty p{font-size:14px}
+
+.timer-disp{font-size:26px;font-weight:800;font-family:'Space Mono',monospace;color:var(--a4)}
+
+/* Fixed back button */
+.fixed-back{position:fixed;top:18px;left:18px;z-index:500;display:none}
+.fixed-back.visible{display:block}
+
+/* Folder study button */
+.folder-study-btn{font-size:10px;padding:3px 9px;border-radius:8px;background:rgba(124,106,247,.15);border:1px solid rgba(124,106,247,.4);color:var(--accent);font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;transition:all .15s;white-space:nowrap}
+.folder-study-btn:hover{background:rgba(124,106,247,.25)}
+
+/* Progress ring */
+.prog-ring{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:700}
+.prog-ring-bar{width:40px;height:5px;background:var(--surf3);border-radius:3px;overflow:hidden}
+.prog-ring-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent),var(--a3));transition:width .4s}
+.prog-ring span{display:inline-block;width:30px;text-align:right}
+
+/* Toggle switch */
+.toggle-switch{position:relative;display:inline-block;width:46px;height:26px;flex-shrink:0}
+.toggle-switch input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;cursor:pointer;inset:0;background:var(--surf3);border-radius:26px;transition:.3s;border:1px solid var(--border)}
+.toggle-slider:before{position:absolute;content:'';height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle-switch input:checked + .toggle-slider{background:var(--accent);border-color:var(--accent)}
+.toggle-switch input:checked + .toggle-slider:before{transform:translateX(20px)}
+
+@media(max-width:600px){
+  .form-row,.form-row-3,.qz-opts{grid-template-columns:1fr}
+  .match-row{flex-wrap:wrap}.mc{min-width:calc(50% - 4px);flex:none}
+  .fc-word{font-size:28px}.lv-dist{grid-template-columns:1fr 1fr}
+  #chart-section>div{grid-template-columns:1fr!important}
+
+  /* Header */
+  header{padding:12px 0 10px;gap:6px}
+  .hstats{gap:10px}
+  .hstat b{font-size:13px}
+  .hstat{font-size:10px}
+
+  /* Tabs */
+  .tab{font-size:10px;padding:6px 2px;min-width:56px}
+  .tab .ico{font-size:12px}
+
+  /* Word/folder row - 2 dòng rõ ràng trên mobile */
+  .expl-row{flex-wrap:wrap;gap:0;padding:8px 6px}
+  .expl-row .expl-name{flex:1;min-width:0;font-size:12px;white-space:normal;word-break:break-word;line-height:1.5}
+  .word-row-controls{width:100%;justify-content:flex-end!important;margin-left:0!important;align-items:center!important;margin-top:6px;flex-shrink:0}
+  .expl-row .expl-actions{opacity:1!important}
+  .expl-row>div:not(.expl-name):not(.word-row-controls){flex-shrink:0}
+
+  /* Voice bar - ẩn chọn giọng trên mobile, chỉ giữ tốc độ */
+  .voice-bar .voice-only{display:none}
+
+  /* Dashboard grid */
+  .dash-grid{grid-template-columns:1fr 1fr;gap:8px}
+  .dash-card{padding:12px 8px}
+  .dash-card .big{font-size:26px}
+
+  /* Explorer toolbar */
+  .explorer-toolbar{gap:6px;padding:8px 10px}
+  .explorer-toolbar .btn{padding:6px 10px;font-size:11px}
+
+  /* Modal */
+  .modal{padding:16px;margin:0}
+
+  /* App padding */
+  #app{padding:0 10px 80px}
+
+  /* Write input */
+  .wr-inp{font-size:16px;padding:12px}
+
+  /* Flashcard */
+  .fc-scene{height:240px}
+  .fc-meaning{font-size:20px}
+  .fc-ex{font-size:12px}
+}
+</style>
+</head>
+<body>
+<div class="glow-a"></div><div class="glow-b"></div>
+
+<!-- Fixed back button -->
+<button class="btn btn-ghost btn-sm fixed-back" id="fixed-back-btn" onclick="handleFixedBack()">← Quay lại</button>
+
+<div id="app">
+
+<header>
+  <div class="logo" onclick="goHome()">No<span>Name</span><em>.</em></div>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab('overview')" id="tab-overview"><span class="ico">📊</span>Tổng quan</button>
+  <button class="tab" onclick="showTab('words')" id="tab-words"><span class="ico">📚</span>Từ vựng</button>
+  <button class="tab" onclick="showTab('learn')" id="tab-learn"><span class="ico">🎓</span>Học mới</button>
+  <button class="tab" onclick="showTab('review')" id="tab-review"><span class="ico">🔁</span>Ôn tập</button>
+  <button class="tab" onclick="showTab('settings')" id="tab-settings"><span class="ico">⚙️</span>Cài đặt</button>
+</div>
+
+<!-- OVERVIEW -->
+<div class="sec active" id="sec-overview">
+  <div class="dash-grid" id="dash-grid"></div>
+  <div class="lv-dist" id="lv-dist"></div>
+  <div class="due-section" id="due-section" style="display:none">
+    <h3>⏰ Từ cần ôn hôm nay</h3>
+    <div id="due-list"></div>
+  </div>
+
+</div>
+
+<!-- WORDS / FILE EXPLORER -->
+<div class="sec" id="sec-words">
+  <div class="explorer" id="explorer">
+    <!-- toolbar, path, content rendered by JS -->
+  </div>
+</div>
+
+<!-- LEARN -->
+<div class="sec" id="sec-learn">
+  <div id="learn-start" class="mode-start">
+    <h2>🎓 Học từ mới</h2>
+    <p>Học từ chưa biết qua 4 bước tuần tự.<br>Hoàn thành đủ → từ được đưa vào hệ thống ôn tập.</p>
+    <div style="margin-bottom:20px;max-width:560px;margin-left:auto;margin-right:auto">
+      <div class="learn-steps" style="margin-bottom:0">
+        <div class="lstep active"><span class="sico">🃏</span>1. Flashcard</div>
+        <div class="lstep"><span class="sico">🔗</span>2. Ghép đôi</div>
+        <div class="lstep"><span class="sico">❓</span>3. Trắc nghiệm</div>
+        <div class="lstep"><span class="sico">✍️</span>4. Viết</div>
+      </div>
+    </div>
+    <div id="learn-folder-pick" style="margin-bottom:20px"></div>
+    <button class="btn btn-primary" onclick="startLearn()" style="font-size:15px;padding:13px 36px">Bắt đầu học →</button>
+  </div>
+  <div id="learn-game" style="display:none"></div>
+</div>
+
+<!-- REVIEW -->
+<div class="sec" id="sec-review">
+  <div id="review-start" class="mode-start">
+    <h2>🔁 Ôn tập</h2>
+    <p id="review-due-msg">Chọn cách ôn tập bạn muốn.</p>
+    <div class="mode-opts">
+      <div class="mode-opt on" id="rv-fc" onclick="selectReviewMode('flashcard',this)"><div class="ico">🃏</div><div class="name">Flashcard</div><div class="desc">Lật thẻ, tự đánh giá</div></div>
+      <div class="mode-opt" id="rv-match" onclick="selectReviewMode('match',this)"><div class="ico">🔗</div><div class="name">Ghép đôi</div><div class="desc">Nối từ với nghĩa</div></div>
+      <div class="mode-opt" id="rv-quiz" onclick="selectReviewMode('quiz',this)"><div class="ico">❓</div><div class="name">Trắc nghiệm</div><div class="desc">4 lựa chọn</div></div>
+      <div class="mode-opt" id="rv-write" onclick="selectReviewMode('write',this)"><div class="ico">✍️</div><div class="name">Viết</div><div class="desc">Gõ từ tiếng Anh</div></div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="startReview()" style="font-size:15px;padding:13px 36px">Bắt đầu ôn tập →</button>
+    </div>
+  </div>
+  <div id="review-game" style="display:none"></div>
+</div>
+
+<!-- SETTINGS -->
+<div class="sec" id="sec-settings">
+  <div class="sec-title">⚙️ <span>Cài đặt</span></div>
+
+  <div class="form-box" style="margin-bottom:16px">
+    <div style="font-size:14px;font-weight:700;margin-bottom:16px;color:var(--text)">🎓 Học từ mới</div>
+    <div style="padding:14px 0">
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px">Số từ mỗi phiên</div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Số từ học trong một phiên Học mới (tối thiểu 1)</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <input type="number" id="setting-batch-input" min="1" max="200" value="5"
+          style="width:80px;background:var(--surf2);border:1px solid var(--border);border-radius:var(--rs);padding:8px 12px;color:var(--text);font-size:14px;font-family:'Space Mono',monospace;font-weight:700;outline:none;text-align:center"
+          oninput="onBatchInput(this.value)"
+          onfocus="this.style.borderColor='var(--accent)'"
+          onblur="this.style.borderColor='var(--border)'">
+        <span style="font-size:13px;color:var(--text2)">từ / phiên</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-box" style="margin-bottom:16px">
+    <div style="font-size:14px;font-weight:700;margin-bottom:16px;color:var(--text)">🔊 Âm thanh & Giọng đọc</div>
+
+    <!-- Auto-speak toggle -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border)">
+      <div>
+        <div style="font-size:13px;font-weight:700">Tự động phát âm thanh</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:3px">Tự động đọc từ tiếng Anh khi hiển thị flashcard hoặc câu hỏi</div>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="setting-autospeak" onchange="saveSettings()">
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <!-- Auto-speak on flip -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border)">
+      <div>
+        <div style="font-size:13px;font-weight:700">Phát âm khi lật thẻ</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:3px">Đọc nghĩa tiếng Việt khi lật mặt sau flashcard</div>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="setting-autospeak-flip" onchange="saveSettings()">
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <!-- Voice select -->
+    <div style="padding:14px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px">Giọng đọc</div>
+      <select id="setting-voice-sel" onchange="saveSettings();setVoiceFromSettings()" style="background:var(--surf2);border:1px solid var(--border);border-radius:var(--rs);padding:8px 12px;color:var(--text);font-size:13px;font-family:'Sora',sans-serif;outline:none;width:100%;max-width:400px">
+        <option>Đang tải giọng...</option>
+      </select>
+    </div>
+
+    <!-- Speed -->
+    <div style="padding:14px 0">
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px">Tốc độ đọc</div>
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <select id="setting-rate-sel" onchange="saveSettings();setRateFromSettings()" style="background:var(--surf2);border:1px solid var(--border);border-radius:var(--rs);padding:8px 12px;color:var(--text);font-size:13px;font-family:'Sora',sans-serif;outline:none">
+          <option value="0.5">Chậm (0.5x)</option>
+          <option value="0.75">Vừa (0.75x)</option>
+          <option value="1" selected>Bình thường (1x)</option>
+          <option value="1.25">Nhanh (1.25x)</option>
+          <option value="1.5">Rất nhanh (1.5x)</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" onclick="speak('Hello, this is a test of the voice speed.')">🔊 Thử giọng</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-box" style="margin-bottom:16px">
+    <div style="font-size:14px;font-weight:700;margin-bottom:6px;color:var(--text)">📦 Xuất / Nhập dữ liệu</div>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:16px">Backup, chia sẻ hoặc nhập từ vựng từ file</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="openExportPicker()">⬆ Xuất dữ liệu</button>
+      <button class="btn btn-ghost" onclick="openImportPicker()">⬇ Nhập dữ liệu</button>
+    </div>
+  </div>
+
+
+
+  <div class="form-box" style="margin-bottom:16px;border-color:rgba(248,113,113,.3)">
+    <div style="font-size:14px;font-weight:700;margin-bottom:6px;color:var(--red)">⚠️ Vùng nguy hiểm</div>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:16px">Xóa toàn bộ từ vựng, thư mục và tiến độ học. Hành động này không thể hoàn tác.</div>
+    <button class="btn btn-danger" onclick="resetAllData()">🗑 Xóa toàn bộ dữ liệu</button>
+  </div>
+
+  <div class="form-box" style="margin-bottom:16px;text-align:center;background:linear-gradient(135deg,rgba(124,106,247,.04),rgba(79,209,181,.04));border-color:rgba(124,106,247,.15)">
+    <div style="font-size:28px;margin-bottom:8px">⚡</div>
+    <div style="font-size:16px;font-weight:800;color:var(--text);letter-spacing:-.3px;margin-bottom:4px">NoName</div>
+    <div style="font-size:12px;font-weight:700;color:var(--accent);letter-spacing:1px;margin-bottom:12px">v1.0.0</div>
+    <div style="height:1px;background:var(--border);margin-bottom:12px"></div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:2px">Developed by</div>
+    <div style="font-size:13px;font-weight:800;color:var(--text2);letter-spacing:.5px">NDH</div>
+  </div>
+
+</div>
+
+</div><!-- /app -->
+
+<!-- MODALS -->
+
+<!-- ADD WORD -->
+<div id="add-word-modal" class="modal-overlay" style="display:none" onclick="closeModalOut(event,'add-word-modal')">
+<div class="modal">
+  <h2>✏️ <span id="aw-title">Thêm từ mới</span></h2>
+  <input type="hidden" id="aw-edit-id" value="">
+  <div class="form-row">
+    <div class="fg"><label>Tiếng Anh *</label><input type="text" id="aw-en" placeholder="ambitious"></div>
+    <div class="fg"><label>Phiên âm</label><input type="text" id="aw-ph" placeholder="/æmˈbɪʃəs/"></div>
+  </div>
+  <div class="form-row">
+    <div class="fg"><label>Tiếng Việt *</label><input type="text" id="aw-vi" placeholder="tham vọng"></div>
+    <div class="fg"><label>Loại từ</label>
+      <select id="aw-type">
+        <option value="noun">Danh từ</option>
+        <option value="verb">Động từ</option>
+        <option value="adj" selected>Tính từ</option>
+        <option value="adv">Trạng từ</option>
+        <option value="phrase">Cụm từ</option>
+      </select>
+    </div>
+  </div>
+  <div class="fg" style="margin-bottom:10px"><label>Ví dụ câu</label><textarea id="aw-ex" placeholder="She is very ambitious about her career."></textarea></div>
+  <div class="fg" style="margin-bottom:0"><label>Thư mục</label>
+    <select id="aw-folder"></select>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="closeModal('add-word-modal')">Huỷ</button>
+    <button class="btn btn-primary" onclick="saveWord()">Lưu từ</button>
+  </div>
+</div>
+</div>
+
+<!-- ADD / EDIT FOLDER -->
+<div id="add-folder-modal" class="modal-overlay" style="display:none" onclick="closeModalOut(event,'add-folder-modal')">
+<div class="modal">
+  <h2>📁 <span id="folder-modal-title">Tạo thư mục</span></h2>
+  <input type="hidden" id="folder-edit-id" value="">
+  <div class="fg" style="margin-bottom:14px"><label>Tên thư mục *</label><input type="text" id="folder-name-inp" placeholder="Ví dụ: IELTS, Giao tiếp..."></div>
+  <div class="fg"><label>Thư mục cha</label><select id="folder-parent-sel"></select></div>
+  <div class="fg" style="margin-top:12px"><label>Màu sắc</label>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px" id="folder-colors">
+      <div class="fclr" data-c="#7c6af7" style="width:28px;height:28px;border-radius:50%;background:#7c6af7;cursor:pointer;border:2px solid #fff"></div>
+      <div class="fclr" data-c="#f7706a" style="width:28px;height:28px;border-radius:50%;background:#f7706a;cursor:pointer;border:2px solid transparent"></div>
+      <div class="fclr" data-c="#4fd1b5" style="width:28px;height:28px;border-radius:50%;background:#4fd1b5;cursor:pointer;border:2px solid transparent"></div>
+      <div class="fclr" data-c="#f9c74f" style="width:28px;height:28px;border-radius:50%;background:#f9c74f;cursor:pointer;border:2px solid transparent"></div>
+      <div class="fclr" data-c="#60a5fa" style="width:28px;height:28px;border-radius:50%;background:#60a5fa;cursor:pointer;border:2px solid transparent"></div>
+      <div class="fclr" data-c="#f472b6" style="width:28px;height:28px;border-radius:50%;background:#f472b6;cursor:pointer;border:2px solid transparent"></div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="closeModal('add-folder-modal')">Huỷ</button>
+    <button class="btn btn-primary" onclick="saveFolder()">Lưu</button>
+  </div>
+</div>
+</div>
+
+<!-- EXPORT PICKER -->
+<div id="export-picker-modal" class="modal-overlay" style="display:none" onclick="closeModalOut(event,'export-picker-modal')">
+<div class="modal" style="max-width:420px">
+  <h2>⬆ Xuất dữ liệu</h2>
+  <p style="font-size:13px;color:var(--text2);margin-bottom:18px">Chọn định dạng file xuất:</p>
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <div onclick="closeModal('export-picker-modal');openExportNDH()" style="background:var(--surf2);border:2px solid var(--border);border-radius:var(--r);padding:16px 18px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+      <div style="font-size:14px;font-weight:800;margin-bottom:4px">📦 NoName (.ndh)</div>
+      <div style="font-size:12px;color:var(--text2)">Xuất toàn bộ dữ liệu, bao gồm thư mục và tiến độ học. Dùng để backup hoặc chia sẻ với người dùng NoName khác.</div>
+    </div>
+    <div onclick="closeModal('export-picker-modal');openExportExcel()" style="background:var(--surf2);border:2px solid var(--border);border-radius:var(--r);padding:16px 18px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--a3)'" onmouseout="this.style.borderColor='var(--border)'">
+      <div style="font-size:14px;font-weight:800;margin-bottom:4px">📊 Excel (.xlsx)</div>
+      <div style="font-size:12px;color:var(--text2)">Xuất danh sách từ vựng ra bảng tính. Dễ chỉnh sửa, chia sẻ, hoặc in ra.</div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="closeModal('export-picker-modal')">Huỷ</button>
+  </div>
+</div>
+</div>
+
+<!-- EXPORT SELECTION MODAL (chung cho NDH và Excel) -->
+<div id="export-select-modal" class="modal-overlay" style="display:none" onclick="closeModalOut(event,'export-select-modal')">
+<div class="modal" style="max-width:560px">
+  <h2 id="export-select-title">📦 Xuất file .ndh</h2>
+
+  <!-- Chọn thư mục -->
+  <div id="export-folder-picker" style="margin-bottom:14px">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <button class="btn btn-ghost btn-sm" onclick="exportFolderSelectAll()">Chọn tất cả</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportFolderClearAll()">Bỏ chọn</button>
+    </div>
+    <div id="export-folder-list" style="display:flex;flex-direction:column;gap:4px;max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--rs);padding:6px"></div>
+    <div style="font-size:11px;color:var(--text3);margin-top:6px">Bao gồm tất cả thư mục con và từ vựng bên trong</div>
+  </div>
+
+  <!-- Chọn từng từ -->
+  <div id="export-word-picker" style="display:none;margin-bottom:14px">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <div style="font-size:12px;font-weight:700;color:var(--text2);letter-spacing:.8px;text-transform:uppercase">Chọn từ vựng</div>
+      <button class="btn btn-ghost btn-sm" onclick="exportPickAllWords()">Chọn tất cả</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportClearWords()">Bỏ chọn</button>
+      <span id="export-word-count" style="margin-left:auto;font-size:12px;color:var(--accent);font-weight:700"></span>
+    </div>
+    <input type="text" class="search-inp" placeholder="🔍 Tìm từ..." oninput="renderExportWordList(this.value)" style="width:100%;margin-bottom:8px;padding:8px 12px;font-size:12px">
+    <div id="export-word-list" style="display:flex;flex-direction:column;gap:2px;max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--rs);padding:6px"></div>
+  </div>
+
+  <!-- Tùy chọn NDH -->
+  <div id="export-ndh-opts" style="display:none;padding:12px;background:var(--surf2);border-radius:var(--rs);margin-bottom:14px">
+    <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;cursor:pointer">
+      <input type="checkbox" id="export-include-progress" style="accent-color:var(--accent);width:15px;height:15px">
+      Bao gồm cấp độ &amp; tiến độ học
+    </label>
+  </div>
+
+  <div id="export-summary" style="font-size:12px;color:var(--text2);margin-bottom:14px"></div>
+
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="closeModal('export-select-modal')">Huỷ</button>
+    <button class="btn btn-primary" id="export-do-btn" onclick="doExport()">⬇ Xuất</button>
+  </div>
+</div>
+</div>
+
+<!-- IMPORT PICKER -->
+<div id="import-picker-modal" class="modal-overlay" style="display:none" onclick="closeModalOut(event,'import-picker-modal')">
+<div class="modal" style="max-width:420px">
+  <h2>⬇ Nhập dữ liệu</h2>
+  <p style="font-size:13px;color:var(--text2);margin-bottom:18px">Chọn định dạng file nhập:</p>
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <div onclick="closeModal('import-picker-modal');openImportNDH()" style="background:var(--surf2);border:2px solid var(--border);border-radius:var(--r);padding:16px 18px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+      <div style="font-size:14px;font-weight:800;margin-bottom:4px">📦 NoName (.ndh)</div>
+      <div style="font-size:12px;color:var(--text2)">Nhập từ file .ndh — giữ nguyên thư mục và tiến độ học (nếu có).</div>
+    </div>
+    <div onclick="closeModal('import-picker-modal');openImportExcel()" style="background:var(--surf2);border:2px solid var(--border);border-radius:var(--r);padding:16px 18px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--a3)'" onmouseout="this.style.borderColor='var(--border)'">
+      <div style="font-size:14px;font-weight:800;margin-bottom:4px">📊 Excel (.xlsx / .xls / .csv)</div>
+      <div style="font-size:12px;color:var(--text2)">Nhập từ bảng tính. Cột A: Tiếng Anh, B: Tiếng Việt, C: Phiên âm, D: Loại từ, E: Ví dụ.</div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="closeModal('import-picker-modal')">Huỷ</button>
+  </div>
+</div>
+</div>
+
+<!-- IMPORT NDH DETAIL -->
+<div id="import-ndh-modal" class="modal-overlay" style="display:none" onclick="closeModalOut(event,'import-ndh-modal')">
+<div class="modal" style="max-width:460px">
+  <h2>📦 Nhập file .ndh</h2>
+  <div class="import-box" id="ndh-drop-zone" onclick="document.getElementById('ndh-file-input').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="event.preventDefault();this.classList.remove('drag');handleNDHFile(event.dataTransfer.files[0])">
+    <div class="ico">📂</div>
+    <p>Nhấn hoặc kéo thả file .ndh vào đây</p>
+    <small>Chỉ hỗ trợ file .ndh của NoName</small>
+  </div>
+  <input type="file" id="ndh-file-input" accept=".ndh" style="display:none" onchange="handleNDHFile(this.files[0])">
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="closeModal('import-ndh-modal')">Huỷ</button>
+  </div>
+</div>
+</div>
+
+<!-- IMPORT EXCEL DETAIL -->
+<div id="import-excel-modal" class="modal-overlay" style="display:none" onclick="closeModalOut(event,'import-excel-modal')">
+<div class="modal" style="max-width:500px">
+  <h2>📊 Nhập file Excel</h2>
+  <div class="import-box" id="import-drop" onclick="document.getElementById('excel-file').click()" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFile(event)">
+    <div class="ico">📊</div>
+    <p>Nhấn để chọn file hoặc kéo thả vào đây</p>
+    <small>Hỗ trợ .xlsx, .xls, .csv</small>
+  </div>
+  <input type="file" id="excel-file" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleExcelFile(event)">
+  <div style="background:var(--surf2);border-radius:var(--rs);padding:12px;margin-bottom:14px;font-size:12px;color:var(--text2);line-height:1.7">
+    <b style="color:var(--text)">Định dạng cột:</b><br>
+    Cột A: <b>Tiếng Anh</b> &nbsp;|&nbsp; Cột B: <b>Tiếng Việt</b> &nbsp;|&nbsp; Cột C: <b>Phiên âm</b><br>
+    Cột D: <b>Loại từ</b> (noun/verb/adj/adv/phrase) &nbsp;|&nbsp; Cột E: <b>Ví dụ</b> &nbsp;|&nbsp; Cột F: <b>Thư mục</b><br>
+    <span style="color:var(--a3)">📁 Cột Thư mục hỗ trợ đường dẫn đầy đủ, ví dụ: <b>IELTS › Speaking › Part 1</b></span><br>
+    <span style="color:var(--a4)">⚠ Dòng đầu tiên là tiêu đề, sẽ bị bỏ qua.</span>
+  </div>
+  <div class="fg" style="margin-bottom:10px"><label>Thêm vào thư mục (dự phòng nếu không có cột Thư mục)</label><select id="import-folder"></select></div>
+  <div id="import-preview" style="display:none;margin-top:14px"></div>
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="closeModal('import-excel-modal')">Huỷ</button>
+    <button class="btn btn-primary" id="import-confirm-btn" onclick="confirmImport()" style="display:none">📥 Nhập từ vựng</button>
+  </div>
+</div>
+</div>
+
+<!-- DUPLICATE CONFLICT MODAL -->
+<div id="dup-modal" class="modal-overlay" style="display:none">
+<div class="modal" style="max-width:580px">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+    <h2 style="margin-bottom:0">⚠️ Từ trùng lặp</h2>
+    <button class="btn btn-ghost btn-sm" onclick="cancelDupResolve()" style="flex-shrink:0">✕ Hủy</button>
+  </div>
+  <div id="dup-modal-body"></div>
+  <div id="dup-apply-all-bar" style="display:none;padding:10px 0;border-top:1px solid var(--border);margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+    <span style="font-size:12px;color:var(--text2);font-weight:600">Áp dụng cho tất cả từ trùng còn lại:</span>
+    <button class="btn btn-ghost btn-sm" onclick="applyAllDup('old')">Giữ tất cả từ cũ</button>
+    <button class="btn btn-primary btn-sm" onclick="applyAllDup('new')">Dùng tất cả từ mới</button>
+  </div>
+</div>
+</div>
+
+<!-- MOVE TO FOLDER -->
+<div id="move-modal" class="modal-overlay" style="display:none" onclick="closeModalOut(event,'move-modal')">
+<div class="modal">
+  <h2>📁 Chuyển thư mục</h2>
+  <p style="font-size:12px;color:var(--text2);margin-bottom:12px" id="move-modal-desc"></p>
+  <div id="move-folder-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:4px;max-height:50vh;overflow-y:auto"></div>
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="closeModal('move-modal')">Huỷ</button>
+  </div>
+</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+//  DATA & STORAGE
+// ═══════════════════════════════════════════
+const STORE_WORDS   = 'fl2_words';
+const STORE_FOLDERS = 'fl2_folders';
+
+let words   = JSON.parse(localStorage.getItem(STORE_WORDS)   || 'null') || [];
+// folders: {id, name, color, parentId|null}
+let folders = JSON.parse(localStorage.getItem(STORE_FOLDERS) || 'null') || [];
+
+let nextId = words.length ? Math.max(...words.map(w=>w.id))+1 : 1;
+
+let _saveTimer=null;
+function save(immediate=false){
+  if(immediate){
+    if(_saveTimer){clearTimeout(_saveTimer);_saveTimer=null;}
+    localStorage.setItem(STORE_WORDS,JSON.stringify(words));
+    localStorage.setItem(STORE_FOLDERS,JSON.stringify(folders));
+  } else {
+    if(_saveTimer) clearTimeout(_saveTimer);
+    _saveTimer=setTimeout(()=>{
+      localStorage.setItem(STORE_WORDS,JSON.stringify(words));
+      localStorage.setItem(STORE_FOLDERS,JSON.stringify(folders));
+      _saveTimer=null;
+    },300);
+  }
+}
+
+// ═══════════════════════════════════════════
+//  SM-2
+// ═══════════════════════════════════════════
+function sm2(sm, quality){
+  let {ef, interval, reps} = sm;
+  if(quality < 3){ reps=0; interval=1; }
+  else {
+    if(reps===0) interval=1;
+    else if(reps===1) interval=6;
+    else interval=Math.round(interval*ef);
+    reps++;
+    ef=Math.max(1.3, ef+0.1-(5-quality)*(0.08+(5-quality)*0.02));
+  }
+  const level=quality<3?0:reps<=1?1:reps<=3?2:3;
+  const nextReview=Date.now()+interval*86400000;
+  return {ef,interval,reps,nextReview,level};
+}
+function isDue(w){ return w.sm.reps>0 && w.sm.nextReview<=Date.now(); }
+function dueWords(){ return words.filter(isDue); }
+function lvLabel(l){ return ['🔴 Quên','🟡 Yếu','🔵 Khá','🟢 Thuộc'][l]; }
+function lvClass(l){ return 'lv lv'+l; }
+function memPct(sm){ return Math.min(100,(sm.reps/6)*100); }
+
+// ═══════════════════════════════════════════
+//  FOLDER HELPERS
+// ═══════════════════════════════════════════
+function getFolderWords(folderId, recursive=true){
+  if(recursive){
+    const ids=getAllDescendantIds(folderId);
+    ids.add(folderId);
+    return words.filter(w=>ids.has(w.folder));
+  }
+  return words.filter(w=>w.folder===folderId);
+}
+
+// Cache cho descendant ids — invalidate khi folders thay đổi
+let _descCache=new Map();
+function invalidateDescCache(){ _descCache.clear(); }
+
+function getAllDescendantIds(folderId){
+  if(_descCache.has(folderId)) return new Set(_descCache.get(folderId));
+  const set=new Set();
+  function collect(id){
+    folders.filter(f=>f.parentId===id).forEach(f=>{set.add(f.id);collect(f.id);});
+  }
+  collect(folderId);
+  _descCache.set(folderId,[...set]);
+  return set;
+}
+
+function getFolderProgress(folderId){
+  const ws=getFolderWords(folderId,true);
+  if(!ws.length) return {pct:0,learned:0,total:0};
+  const learned=ws.filter(w=>w.sm.reps>0).length;
+  return {pct:Math.round((learned/ws.length)*100),learned,total:ws.length};
+}
+
+function getChildFolders(parentId){
+  return folders.filter(f=>f.parentId===(parentId||null));
+}
+
+function buildFolderPath(folderId){
+  const path=[];
+  let cur=folders.find(f=>f.id===folderId);
+  while(cur){
+    path.unshift(cur);
+    cur=folders.find(f=>f.id===cur.parentId);
+  }
+  return path;
+}
+
+// ═══════════════════════════════════════════
+//  VOICE
+// ═══════════════════════════════════════════
+let voices=[], selVoice=null, selRate=1;
+function loadVoices(){
+  const all=speechSynthesis.getVoices();
+  voices=all.filter(v=>v.lang.startsWith('en'));
+  if(!voices.length) voices=all;
+  const sel=document.getElementById('voice-sel');
+  if(sel){
+    if(voices.length){
+      sel.innerHTML=voices.map((v,i)=>`<option value="${i}">${v.name} (${v.lang})</option>`).join('');
+      selVoice=voices[appSettings.voiceIndex]||voices[0];
+      sel.value=appSettings.voiceIndex;
+    } else {
+      sel.innerHTML='<option>Không có giọng</option>';
+      selVoice=null;
+    }
+  }
+  // Also sync settings selector if open
+  const ssel=document.getElementById('setting-voice-sel');
+  if(ssel && voices.length){
+    ssel.innerHTML=voices.map((v,i)=>`<option value="${i}">${v.name} (${v.lang})</option>`).join('');
+    ssel.value=appSettings.voiceIndex;
+  }
+}
+// Thử nhiều lần để đảm bảo voices được load trên mobile
+if(typeof speechSynthesis!=='undefined'){
+  speechSynthesis.onvoiceschanged=loadVoices;
+  loadVoices();
+  setTimeout(loadVoices,200);
+  setTimeout(loadVoices,1000);
+  setTimeout(loadVoices,3000);
+}
+function setVoice(){ const i=document.getElementById('voice-sel').value; selVoice=voices[i]||null; }
+function setRate(){ selRate=parseFloat(document.getElementById('rate-sel').value); }
+function speak(text){
+  if(!text) return;
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);
+  if(selVoice) u.voice=selVoice;
+  u.rate=selRate; u.lang='en-US';
+  speechSynthesis.speak(u);
+}
+
+// ═══════════════════════════════════════════
+//  NAV / FIXED BACK
+// ═══════════════════════════════════════════
+let fixedBackCallback=null;
+
+function setFixedBack(cb){
+  fixedBackCallback=cb;
+  document.getElementById('fixed-back-btn').classList.add('visible');
+}
+function hideFixedBack(){
+  fixedBackCallback=null;
+  document.getElementById('fixed-back-btn').classList.remove('visible');
+}
+function handleFixedBack(){
+  if(fixedBackCallback) fixedBackCallback();
+}
+
+function showTab(t){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sec-'+t).classList.add('active');
+  document.getElementById('tab-'+t).classList.add('active');
+  hideFixedBack();
+  if(t==='overview') renderOverview();
+  if(t==='words'){explorerPath=[];selectedItems.clear();renderExplorer();}
+  if(t==='learn') renderLearnStart();
+  if(t==='review') renderReviewStart();
+  if(t==='settings') renderSettings();
+}
+function goHome(){ showTab('overview'); }
+
+// ═══════════════════════════════════════════
+//  OVERVIEW
+// ═══════════════════════════════════════════
+function renderOverview(){
+  const due=[];
+  let notLearnedC=0,forgottenC=0,weakC=0,okC=0,masteredC=0,learnedToday=0;
+  const todayTs=new Date().setHours(0,0,0,0);
+  const now=Date.now();
+  words.forEach(w=>{
+    const {reps,level,nextReview}=w.sm;
+    if(reps===0) notLearnedC++;
+    else{
+      if(nextReview<=now) due.push(w);
+      if(level===0) forgottenC++;
+      else if(level===1) weakC++;
+      else if(level===2) okC++;
+      else masteredC++;
+    }
+    if(w.learnedAt&&w.learnedAt>=todayTs) learnedToday++;
+  });
+
+  document.getElementById('dash-grid').innerHTML=`
+    <div class="dash-card"><div class="big">${words.length}</div><div class="lbl">Tổng từ vựng</div></div>
+    <div class="dash-card"><div class="big" style="color:var(--a4)">${due.length}</div><div class="lbl">Cần ôn hôm nay</div></div>
+    <div class="dash-card"><div class="big" style="color:var(--accent)">${learnedToday}</div><div class="lbl">Học hôm nay</div></div>
+  `;
+
+  document.getElementById('lv-dist').innerHTML=[
+    {count:notLearnedC,name:'Chưa học',sub:'Chưa bắt đầu học',c:'var(--text3)'},
+    {count:forgottenC,name:'Quên',sub:'Cần học lại ngay',c:'var(--lv0)'},
+    {count:weakC,name:'Yếu',sub:'Nhớ ít, cần ôn thêm',c:'var(--lv1)'},
+    {count:okC,name:'Khá',sub:'Nhớ được, cần củng cố',c:'var(--lv2)'},
+    {count:masteredC,name:'Thuộc',sub:'Nắm vững từ này',c:'var(--lv3)'},
+  ].map(({count,name,sub,c})=>`
+    <div class="lv-dist-item">
+      <div class="lv-dist-n" style="color:${c}">${count}</div>
+      <div class="lv-dist-info"><div class="name">${name}</div><div class="sub">${sub}</div></div>
+    </div>
+  `).join('');
+
+  renderCharts();
+
+  const ds=document.getElementById('due-section');
+  if(due.length){
+    ds.style.display='block';
+    document.getElementById('due-list').innerHTML=due.slice(0,10).map(w=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+        <span class="${lvClass(w.sm.level)}">${lvLabel(w.sm.level)}</span>
+        <span style="font-weight:700">${w.en}</span>
+        <span style="color:var(--text2);font-size:13px">${w.vi}</span>
+        <button class="btn-icon" onclick="speak('${w.en.replace(/'/g,"\\'")}')">🔊</button>
+      </div>
+    `).join('')+(due.length>10?`<div style="font-size:12px;color:var(--text2);padding-top:8px">+${due.length-10} từ nữa...</div>`:'');
+  } else ds.style.display='none';
+}
+
+let chartPeriod = 'week'; // 'week' | 'month'
+
+function setChartPeriod(p){
+  chartPeriod = p;
+  renderCharts();
+}
+
+function renderCharts(){
+  // Tính level distribution trong một loop
+  let notLearned=0,forgotten=0,weak=0,ok=0,mastered=0;
+  words.forEach(w=>{
+    const {reps,level}=w.sm;
+    if(reps===0) notLearned++;
+    else if(level===0) forgotten++;
+    else if(level===1) weak++;
+    else if(level===2) ok++;
+    else mastered++;
+  });
+  const lvData=[
+    {label:'Chưa học',val:notLearned,c:'#9090b0'},
+    {label:'Quên',val:forgotten,c:'#dc2626'},
+    {label:'Yếu',val:weak,c:'#d4920a'},
+    {label:'Khá',val:ok,c:'#2563eb'},
+    {label:'Thuộc',val:mastered,c:'#16a34a'},
+  ];
+  const maxLv=Math.max(...lvData.map(d=>d.val),1);
+
+  // Time series data
+  const periods=[];
+  if(chartPeriod==='week'){
+    for(let i=6;i>=0;i--){
+      const d=new Date(); d.setDate(d.getDate()-i); d.setHours(0,0,0,0);
+      const start=d.getTime(), end=start+86400000;
+      const label=i===0?'Hôm nay':`${d.getDate()}/${d.getMonth()+1}`;
+      periods.push({label, count:words.filter(w=>w.learnedAt&&w.learnedAt>=start&&w.learnedAt<end).length});
+    }
+  } else {
+    // 12 tháng gần nhất
+    for(let i=11;i>=0;i--){
+      const d=new Date();
+      d.setDate(1);
+      d.setMonth(d.getMonth()-i);
+      d.setHours(0,0,0,0);
+      const start=d.getTime();
+      const endD=new Date(d); endD.setMonth(endD.getMonth()+1);
+      const end=endD.getTime();
+      const label=`T${d.getMonth()+1}`;
+      periods.push({label, count:words.filter(w=>w.learnedAt&&w.learnedAt>=start&&w.learnedAt<end).length});
+    }
+  }
+  const maxP=Math.max(...periods.map(d=>d.count),1);
+  const periodLabel=chartPeriod==='week'?'7 ngày gần nhất':'12 tháng gần nhất';
+
+  const chartHtml=`
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px">
+    <div style="background:var(--surf);border:1px solid var(--border);border-radius:var(--r);padding:18px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:14px">📊 Phân bố theo cấp độ</div>
+      <div style="display:flex;flex-direction:column;gap:9px">
+        ${lvData.map(d=>`
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">
+              <span style="font-weight:600;color:${d.c}">${d.label}</span>
+              <span style="font-weight:700;font-family:'Space Mono',monospace">${d.val}</span>
+            </div>
+            <div style="height:7px;background:var(--surf3);border-radius:4px;overflow:hidden">
+              <div style="height:100%;width:${Math.round((d.val/maxLv)*100)}%;background:${d.c};border-radius:4px;transition:width .5s"></div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+    <div style="background:var(--surf);border:1px solid var(--border);border-radius:var(--r);padding:18px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+        <div style="font-size:13px;font-weight:700">📅 Từ học ${periodLabel}</div>
+        <div style="display:flex;gap:4px">
+          <button onclick="setChartPeriod('week')" style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid var(--border);font-family:'Sora',sans-serif;transition:all .15s;${chartPeriod==='week'?'background:var(--accent);color:#fff;border-color:var(--accent)':'background:transparent;color:var(--text2)'}">Năm</button>
+          <button onclick="setChartPeriod('month')" style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid var(--border);font-family:'Sora',sans-serif;transition:all .15s;${chartPeriod==='month'?'background:var(--accent);color:#fff;border-color:var(--accent)':'background:transparent;color:var(--text2)'}">Tháng</button>
+        </div>
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:${chartPeriod==='week'?'6':'4'}px;height:110px">
+        ${periods.map(d=>`
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;height:100%">
+            <div style="flex:1;display:flex;align-items:flex-end;width:100%">
+              <div title="${d.count} từ" style="width:100%;background:var(--accent);border-radius:3px 3px 0 0;height:${Math.max(Math.round((d.count/maxP)*100),d.count>0?3:0)}%;min-height:${d.count>0?'3px':'0'};transition:height .5s;opacity:.85"></div>
+            </div>
+            <div style="font-size:9px;color:var(--text2);text-align:center;font-weight:600">${d.count>0?d.count:''}</div>
+            <div style="font-size:9px;color:var(--text3);text-align:center;white-space:nowrap;overflow:hidden;width:100%">${d.label}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  </div>
+  `;
+
+  let chartContainer=document.getElementById('chart-section');
+  if(!chartContainer){
+    chartContainer=document.createElement('div');
+    chartContainer.id='chart-section';
+    const lvDist=document.getElementById('lv-dist');
+    lvDist.parentNode.insertBefore(chartContainer,lvDist.nextSibling);
+  }
+  chartContainer.innerHTML=chartHtml;
+}
+
+// ═══════════════════════════════════════════
+//  FILE EXPLORER
+// ═══════════════════════════════════════════
+let explorerPath=[]; // array of folder ids, empty = root
+let selectedItems=new Set(); // Set of "f:id" or "w:id"
+let explorerSearchQ='';
+
+function renderExplorer(){
+  const ex=document.getElementById('explorer');
+  const currentFolderId=explorerPath.length?explorerPath[explorerPath.length-1]:null;
+  const childFolders=getChildFolders(currentFolderId);
+  let wordsHere, showingSearchResults=false;
+
+  // filter by search - tìm toàn bộ từ vựng kể cả thư mục con
+  if(explorerSearchQ){
+    const q=explorerSearchQ.toLowerCase();
+    wordsHere=words.filter(w=>w.en.toLowerCase().includes(q)||w.vi.toLowerCase().includes(q));
+    showingSearchResults=true;
+  } else {
+    wordsHere=words.filter(w=>w.folder===currentFolderId);
+  }
+
+  // path breadcrumb
+  const pathSegs=explorerPath.map(id=>folders.find(f=>f.id===id)).filter(Boolean);
+  const pathHtml=`
+    <span class="path-seg" onclick="explorerGoRoot()">📚 Tất cả</span>
+    ${pathSegs.map((f,i)=>`<span class="path-sep">›</span><span class="path-seg" onclick="explorerGo(${i})">${f.name}</span>`).join('')}
+  `;
+
+  const selCount=selectedItems.size;
+
+  ex.innerHTML=`
+    <div class="explorer-toolbar">
+      <button class="btn btn-primary btn-sm" onclick="openAddWord()">+ Thêm từ</button>
+      <button class="btn btn-ghost btn-sm" onclick="openAddFolder()">📁 Tạo thư mục</button>
+      <input class="search-inp" style="max-width:200px;padding:7px 12px;font-size:12px;margin-left:auto" type="text" placeholder="🔍 Tìm từ..." value="${explorerSearchQ}" oninput="explorerSearch(this.value)">
+    </div>
+    <div class="explorer-path">${pathHtml}</div>
+    <div class="explorer-select-bar">
+      <button class="btn btn-ghost btn-sm" onclick="selectAll()">Chọn tất cả</button>
+      <button class="btn btn-ghost btn-sm" data-action="clear" onclick="clearSelection()" ${!selCount?'disabled style="opacity:.35;cursor:not-allowed"':''}>Bỏ chọn</button>
+      <button class="btn btn-ghost btn-sm" data-action="move" onclick="${selCount?'openMoveSelected()':''}" ${!selCount?'disabled style="opacity:.35;cursor:not-allowed"':''}>📁 Chuyển</button>
+      <button class="btn btn-danger btn-sm" data-action="delete" onclick="${selCount?'deleteSelected()':''}" ${!selCount?'disabled style="opacity:.35;cursor:not-allowed"':''}>🗑 Xoá</button>
+      <button class="btn btn-ghost btn-sm" data-action="reset" style="color:${selCount?'var(--a4)':'var(--text3)'};border-color:${selCount?'rgba(249,199,79,.3)':'var(--border)'}" onclick="${selCount?'resetSelectedProgress()':''}" ${!selCount?'disabled style="opacity:.35;cursor:not-allowed;color:var(--text3);border-color:var(--border)"':''}>↺ Reset tiến độ</button>
+      ${selCount?`<span class="sel-count-badge" style="font-size:12px;font-weight:700;color:var(--accent);margin-left:4px">✓ ${selCount} đã chọn</span>`:''}
+    </div>
+    <div class="explorer-content" id="explorer-content">
+      ${renderExplorerItems(showingSearchResults?[]:childFolders,wordsHere,showingSearchResults)}
+    </div>
+  `;
+}
+
+function renderExplorerItems(childFolders, wordsHere, showingSearchResults=false){
+  const typeMap={noun:'Danh từ',verb:'Động từ',adj:'Tính từ',adv:'Trạng từ',phrase:'Cụm từ'};
+  const now=Date.now();
+  let html='';
+
+  if(!childFolders.length && !wordsHere.length){
+    return '<div class="empty"><div class="ico">📂</div><p>Thư mục này trống. Thêm từ vựng hoặc tạo thư mục con.</p></div>';
+  }
+
+  // Folders
+  childFolders.forEach(f=>{
+    const {pct,learned,total}=getFolderProgress(f.id);
+    const selKey='f:'+f.id;
+    const checked=selectedItems.has(selKey);
+    const childCount=getChildFolders(f.id).length;
+    const progressColor=pct>=80?'var(--green)':pct>=40?'var(--a4)':'var(--accent)';
+    html+=`
+      <div class="expl-row ${checked?'selected':''}" data-selkey="${selKey}" onclick="explorerOpenFolder('${f.id}')">
+        <input type="checkbox" class="expl-checkbox" ${checked?'checked':''} onclick="event.stopPropagation();toggleSelect('${selKey}')">
+        <div class="expl-ico">📁</div>
+        <div class="expl-name" style="color:${f.color||'var(--text)'}">${f.name}${childCount?`<span style="font-size:10px;color:var(--text3);margin-left:6px">(${childCount} thư mục con)</span>`:''}</div>
+        <div class="word-row-controls" style="display:flex;align-items:center;gap:8px;margin-left:auto">
+          <div class="prog-ring">
+            <div class="prog-ring-bar"><div class="prog-ring-fill" style="width:${pct}%;background:${progressColor}"></div></div>
+            <span style="color:${progressColor}">${pct}%</span>
+          </div>
+          <span class="expl-meta">${total} từ</span>
+          <button class="folder-study-btn" onclick="event.stopPropagation();startFolderStudy('${f.id}')">📖 Học</button>
+          <div class="expl-actions">
+            <button class="btn-icon" style="width:26px;height:26px;font-size:11px" onclick="event.stopPropagation();openMoveFolder('${f.id}')">📁</button>
+            <button class="btn-icon" style="width:26px;height:26px;font-size:11px" onclick="event.stopPropagation();openEditFolder('${f.id}')">✏️</button>
+            <button class="btn-icon" style="width:26px;height:26px;font-size:11px;color:var(--red)" onclick="event.stopPropagation();deleteFolder('${f.id}')">🗑</button>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  // Words
+  wordsHere.forEach(w=>{
+    const selKey='w:'+w.id;
+    const checked=selectedItems.has(selKey);
+    const pct=Math.round(memPct(w.sm));
+    const lvColor=['var(--lv0)','var(--lv1)','var(--lv2)','var(--lv3)'][w.sm.level];
+    const dueStr=isDue(w)?'⏰':w.sm.reps===0?'—':'✓';
+    html+=`
+      <div class="expl-row ${checked?'selected':''}" data-selkey="${selKey}" style="flex-wrap:wrap;align-items:center">
+        <input type="checkbox" class="expl-checkbox" ${checked?'checked':''} onclick="toggleSelect('${selKey}')">
+        <div class="expl-name" style="flex:1;min-width:0">
+          <span style="font-weight:700">${w.en}</span>
+          <span style="font-size:11px;color:var(--accent);font-family:'Space Mono',monospace;margin-left:6px">${w.ph||''}</span>
+          <span style="font-size:12px;color:var(--text2);margin-left:8px">${w.vi}</span>
+          <span style="font-size:10px;color:var(--text3);margin-left:6px">${typeMap[w.type]||w.type}</span>
+          ${showingSearchResults&&w.folder?`<span style="font-size:10px;color:var(--text3);margin-left:6px">📁 ${(folders.find(f=>f.id===w.folder)||{}).name||''}</span>`:''}
+        </div>
+        <div class="word-row-controls" style="display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0">
+          ${w.sm.reps===0?`<span class="lv" style="background:rgba(150,150,180,.12);color:var(--text3);border:1px solid rgba(150,150,180,.2);font-size:10px">Chưa học</span>`:`<span class="${lvClass(w.sm.level)}" style="font-size:10px">${lvLabel(w.sm.level)}</span>`}
+          <div class="prog-ring">
+            <div class="prog-ring-bar"><div class="prog-ring-fill" style="width:${pct}%;background:${lvColor}"></div></div>
+            <span style="color:${lvColor};font-size:10px">${pct}%</span>
+          </div>
+          <div class="expl-actions" style="opacity:1;display:flex;gap:3px">
+            <button class="btn-icon" style="width:26px;height:26px;font-size:11px" onclick="event.stopPropagation();speak('${w.en.replace(/'/g,"\\'")}')">🔊</button>
+            <button class="btn-icon" style="width:26px;height:26px;font-size:11px" onclick="event.stopPropagation();openEdit(${w.id})">✏️</button>
+            <button class="btn-icon" style="width:26px;height:26px;font-size:11px;color:var(--red)" onclick="event.stopPropagation();deleteWord(${w.id})">🗑</button>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  return html;
+}
+
+let _searchTimer=null;
+function explorerSearch(q){
+  explorerSearchQ=q;
+  if(_searchTimer) clearTimeout(_searchTimer);
+  _searchTimer=setTimeout(()=>{
+    const inp=document.querySelector('.explorer .search-inp');
+    const pos=inp?inp.selectionStart:null;
+    renderExplorer();
+    const newInp=document.querySelector('.explorer .search-inp');
+    if(newInp){newInp.focus();if(pos!==null)try{newInp.setSelectionRange(pos,pos);}catch(e){}}
+    _searchTimer=null;
+  },120);
+}
+
+function explorerRowClick(e, key){
+  if(e.target.type==='checkbox') return;
+  // single click just toggles selection
+  toggleSelect(key);
+}
+
+function explorerOpenFolder(id){
+  explorerPath.push(id);
+  selectedItems.clear();
+  renderExplorer();
+}
+
+function explorerGoRoot(){
+  explorerPath=[];
+  selectedItems.clear();
+  renderExplorer();
+}
+
+function explorerGo(idx){
+  explorerPath=explorerPath.slice(0,idx+1);
+  selectedItems.clear();
+  renderExplorer();
+}
+
+function toggleSelect(key){
+  if(selectedItems.has(key)) selectedItems.delete(key);
+  else selectedItems.add(key);
+  // Fast path: just update the row's selected class + checkbox + select-bar count
+  const safeKey=key.replace(/:/g,'\\:');
+  const row=document.querySelector(`[data-selkey="${CSS.escape(key)}"]`);
+  if(row){
+    const cb=row.querySelector('.expl-checkbox');
+    const isNowSel=selectedItems.has(key);
+    row.classList.toggle('selected',isNowSel);
+    if(cb) cb.checked=isNowSel;
+    _updateSelectBar();
+  } else {
+    renderExplorer();
+  }
+}
+
+function _updateSelectBar(){
+  const selCount=selectedItems.size;
+  const bar=document.querySelector('.explorer-select-bar');
+  if(!bar) return;
+  // Update disabled states
+  const btns=bar.querySelectorAll('button[data-action]');
+  btns.forEach(b=>{
+    const dis=!selCount;
+    b.disabled=dis;
+    b.style.opacity=dis?'.35':'';
+    b.style.cursor=dis?'not-allowed':'';
+  });
+  // Update count badge
+  let badge=bar.querySelector('.sel-count-badge');
+  if(selCount){
+    if(!badge){
+      badge=document.createElement('span');
+      badge.className='sel-count-badge';
+      badge.style.cssText='font-size:12px;font-weight:700;color:var(--accent);margin-left:4px';
+      bar.appendChild(badge);
+    }
+    badge.textContent=`✓ ${selCount} đã chọn`;
+  } else {
+    if(badge) badge.remove();
+  }
+  // Update Reset button color
+  const resetBtn=bar.querySelector('button[data-action="reset"]');
+  if(resetBtn){
+    resetBtn.style.color=selCount?'var(--a4)':'var(--text3)';
+    resetBtn.style.borderColor=selCount?'rgba(249,199,79,.3)':'var(--border)';
+  }
+}
+
+function selectAll(){
+  const currentFolderId=explorerPath.length?explorerPath[explorerPath.length-1]:null;
+  if(currentFolderId===null){
+    // Root: select ALL words and ALL folders in the entire app
+    words.forEach(w=>selectedItems.add('w:'+w.id));
+    folders.forEach(f=>selectedItems.add('f:'+f.id));
+  } else {
+    // Inside a folder: select child folders + all words in this folder and descendants
+    getChildFolders(currentFolderId).forEach(f=>selectedItems.add('f:'+f.id));
+    const descendantIds=new Set();
+    getChildFolders(currentFolderId).forEach(f=>{
+      getAllDescendantIds(f.id).forEach(id=>descendantIds.add(id));
+      descendantIds.add(f.id);
+    });
+    words.filter(w=>w.folder===currentFolderId||descendantIds.has(w.folder)).forEach(w=>selectedItems.add('w:'+w.id));
+  }
+  renderExplorer();
+}
+
+function clearSelection(){
+  selectedItems.clear();
+  renderExplorer();
+}
+
+function deleteSelected(){
+  const wIds=[];
+  const fIds=[];
+  selectedItems.forEach(k=>{
+    if(k.startsWith('w:')) wIds.push(parseInt(k.slice(2)));
+    if(k.startsWith('f:')) fIds.push(k.slice(2));
+  });
+  const total=wIds.length+fIds.length;
+  if(!total) return;
+  if(!confirm(`Xoá ${total} mục đã chọn? Từ vựng trong thư mục bị xoá cũng sẽ bị xoá theo.`)) return;
+  // Collect all word IDs to delete (selected words + all words inside selected folders)
+  const allWIds=new Set(wIds);
+  fIds.forEach(fid=>{
+    const toRemove=new Set([fid,...getAllDescendantIds(fid)]);
+    words.forEach(w=>{ if(toRemove.has(w.folder)) allWIds.add(w.id); });
+    folders=folders.filter(f=>!toRemove.has(f.id));
+  });
+  words=words.filter(w=>!allWIds.has(w.id));
+  selectedItems.clear();
+  save();
+  renderExplorer();
+  renderOverview();
+  toast(`🗑 Đã xoá ${allWIds.size} từ${fIds.length?' và '+fIds.length+' thư mục':''}!`);
+}
+
+function resetSelectedProgress(){
+  const wIds=[];
+  selectedItems.forEach(k=>{
+    if(k.startsWith('w:')) wIds.push(parseInt(k.slice(2)));
+    if(k.startsWith('f:')){
+      // reset all words in folder
+      const fid=k.slice(2);
+      getFolderWords(fid,true).forEach(w=>wIds.push(w.id));
+    }
+  });
+  if(!wIds.length){toast('⚠️ Không có từ nào để reset!');return;}
+  if(!confirm(`Reset tiến độ ${wIds.length} từ?`)) return;
+  const now=Date.now();
+  words.forEach(w=>{
+    if(wIds.includes(w.id)) w.sm={ef:2.5,interval:0,reps:0,nextReview:now,level:0};
+  });
+  save();
+  renderExplorer();
+  toast(`↺ Đã reset tiến độ ${wIds.length} từ!`);
+}
+
+function openMoveSelected(){
+  const wIds=[];
+  const fIds=[];
+  selectedItems.forEach(k=>{
+    if(k.startsWith('w:')) wIds.push(parseInt(k.slice(2)));
+    if(k.startsWith('f:')) fIds.push(k.slice(2));
+  });
+  if(!wIds.length && !fIds.length){toast('⚠️ Chưa chọn mục nào!');return;}
+  openMoveMultipleItems(wIds, fIds);
+}
+
+// ═══════════════════════════════════════════
+//  MODALS
+// ═══════════════════════════════════════════
+function openModal(id){ document.getElementById(id).style.display='flex'; }
+function closeModal(id){ document.getElementById(id).style.display='none'; }
+function closeModalOut(e,id){ if(e.target.id===id) closeModal(id); }
+
+function openAddWord(){
+  document.getElementById('aw-title').textContent='Thêm từ mới';
+  document.getElementById('aw-edit-id').value='';
+  ['aw-en','aw-ph','aw-vi','aw-ex'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('aw-type').value='adj';
+  populateFolderSelect('aw-folder');
+  // pre-select current folder
+  const cid=explorerPath.length?explorerPath[explorerPath.length-1]:'';
+  document.getElementById('aw-folder').value=cid||'';
+  openModal('add-word-modal');
+}
+
+function openImport(){
+  // Legacy: no longer used (import moved to settings)
+}
+
+function openAddFolder(parentId){
+  document.getElementById('folder-modal-title').textContent='Tạo thư mục';
+  document.getElementById('folder-edit-id').value='';
+  document.getElementById('folder-name-inp').value='';
+  populateFolderParentSelect('folder-parent-sel', null);
+  if(parentId) document.getElementById('folder-parent-sel').value=parentId;
+  else {
+    const cid=explorerPath.length?explorerPath[explorerPath.length-1]:'';
+    document.getElementById('folder-parent-sel').value=cid||'';
+  }
+  document.querySelectorAll('.fclr').forEach((el,i)=>{
+    el.style.border=i===0?'2px solid #fff':'2px solid transparent';
+    el.onclick=()=>{
+      document.querySelectorAll('.fclr').forEach(e=>e.style.border='2px solid transparent');
+      el.style.border='2px solid #fff';
+    };
+  });
+  openModal('add-folder-modal');
+}
+
+function openEditFolder(id){
+  const f=folders.find(x=>x.id===id);
+  if(!f) return;
+  document.getElementById('folder-modal-title').textContent='Sửa thư mục';
+  document.getElementById('folder-edit-id').value=id;
+  document.getElementById('folder-name-inp').value=f.name;
+  populateFolderParentSelect('folder-parent-sel', id);
+  document.getElementById('folder-parent-sel').value=f.parentId||'';
+  document.querySelectorAll('.fclr').forEach(el=>{
+    el.style.border=el.dataset.c===f.color?'2px solid #fff':'2px solid transparent';
+    el.onclick=()=>{
+      document.querySelectorAll('.fclr').forEach(e=>e.style.border='2px solid transparent');
+      el.style.border='2px solid #fff';
+    };
+  });
+  openModal('add-folder-modal');
+}
+
+function populateFolderSelect(selId){
+  const sel=document.getElementById(selId);
+  sel.innerHTML=`<option value="">-- Không có --</option>`
+    +folders.map(f=>`<option value="${f.id}">${getFolderFullPath(f.id)}</option>`).join('');
+}
+
+function populateFolderParentSelect(selId, excludeId){
+  const sel=document.getElementById(selId);
+  const excluded=excludeId?new Set([excludeId,...getAllDescendantIds(excludeId)]):new Set();
+  // Filter out folders named exactly "Tất cả" to avoid confusion with root breadcrumb label
+  sel.innerHTML=`<option value="">-- Gốc (không có cha) --</option>`
+    +folders.filter(f=>!excluded.has(f.id) && f.name!=='Tất cả').map(f=>`<option value="${f.id}">${getFolderFullPath(f.id)}</option>`).join('');
+}
+
+function getFolderFullPath(id){
+  return buildFolderPath(id).map(f=>f.name).join(' › ');
+}
+
+function saveFolder(){
+  const name=document.getElementById('folder-name-inp').value.trim();
+  if(!name){toast('⚠️ Nhập tên thư mục!');return;}
+  const color=document.querySelector('.fclr[style*="solid #fff"]')?.dataset.c||'#7c6af7';
+  const parentId=document.getElementById('folder-parent-sel').value||null;
+  const editId=document.getElementById('folder-edit-id').value;
+  if(editId){
+    const f=folders.find(x=>x.id===editId);
+    if(f){f.name=name;f.color=color;f.parentId=parentId;}
+    toast('✅ Đã cập nhật thư mục!');
+  } else {
+    const id='f'+Date.now();
+    folders.push({id,name,color,parentId});
+    toast('📁 Đã tạo thư mục!');
+  }
+  save();invalidateDescCache();closeModal('add-folder-modal');renderExplorer();
+}
+
+function deleteFolder(id){
+  if(!confirm('Xoá thư mục? Từ vựng trong thư mục sẽ về "Không có thư mục".')) return;
+  const toRemove=new Set([id,...getAllDescendantIds(id)]);
+  words.forEach(w=>{if(toRemove.has(w.folder))w.folder=null;});
+  folders=folders.filter(f=>!toRemove.has(f.id));
+  // fix explorer path
+  explorerPath=explorerPath.filter(pid=>!toRemove.has(pid));
+  save();invalidateDescCache();renderExplorer();toast('🗑 Đã xoá thư mục!');
+}
+
+function openEdit(id){
+  const w=words.find(x=>x.id===id);
+  if(!w) return;
+  document.getElementById('aw-title').textContent='Sửa từ vựng';
+  document.getElementById('aw-edit-id').value=id;
+  document.getElementById('aw-en').value=w.en;
+  document.getElementById('aw-ph').value=w.ph||'';
+  document.getElementById('aw-vi').value=w.vi;
+  document.getElementById('aw-type').value=w.type;
+  document.getElementById('aw-ex').value=w.ex||'';
+  populateFolderSelect('aw-folder');
+  document.getElementById('aw-folder').value=w.folder||'';
+  openModal('add-word-modal');
+}
+
+function saveWord(){
+  const en=document.getElementById('aw-en').value.trim();
+  const vi=document.getElementById('aw-vi').value.trim();
+  if(!en||!vi){toast('⚠️ Nhập tiếng Anh và tiếng Việt!');return;}
+  const editId=document.getElementById('aw-edit-id').value;
+  if(editId){
+    const w=words.find(x=>x.id==editId);
+    if(w){
+      w.en=en;w.ph=document.getElementById('aw-ph').value.trim();
+      w.vi=vi;w.type=document.getElementById('aw-type').value;
+      w.ex=document.getElementById('aw-ex').value.trim();
+      w.folder=document.getElementById('aw-folder').value||null;
+    }
+    toast('✅ Đã cập nhật từ!');
+  } else {
+    words.push({id:nextId++,en,ph:document.getElementById('aw-ph').value.trim(),vi,type:document.getElementById('aw-type').value,ex:document.getElementById('aw-ex').value.trim(),folder:document.getElementById('aw-folder').value||null,starred:false,sm:{ef:2.5,interval:0,reps:0,nextReview:Date.now(),level:0}});
+    toast('✅ Đã thêm từ!');
+  }
+  save();renderExplorer();closeModal('add-word-modal');
+}
+
+function deleteWord(id){
+  if(!confirm('Xoá từ này?')) return;
+  words=words.filter(x=>x.id!==id);
+  save();renderExplorer();
+}
+
+function openMoveFolder(folderId){
+  openMoveMultipleItems([], [folderId]);
+}
+
+function openMoveMultipleItems(wIds, fIds){
+  // Excluded: folders being moved and their descendants (can't move into themselves)
+  const excluded=new Set();
+  fIds.forEach(fid=>{excluded.add(fid);getAllDescendantIds(fid).forEach(id=>excluded.add(id));});
+  const desc=[];
+  if(fIds.length) desc.push(`${fIds.length} thư mục`);
+  if(wIds.length) desc.push(`${wIds.length} từ vựng`);
+  document.getElementById('move-modal-desc').textContent=`Chuyển ${desc.join(' và ')} vào:`;
+  const list=document.getElementById('move-folder-list');
+  const wIdsJson=JSON.stringify(wIds);
+  const fIdsJson=JSON.stringify(fIds);
+  list.innerHTML=`
+    <div style="padding:10px;border-radius:var(--rs);cursor:pointer;border:1px solid var(--border);font-size:13px;font-weight:600" onclick="executeMove(${wIdsJson},${fIdsJson},null)">📚 Gốc (không có cha)</div>
+    ${folders.filter(f=>!excluded.has(f.id)).map(f=>`
+      <div style="padding:10px;border-radius:var(--rs);cursor:pointer;border:1px solid ${f.color||'var(--border)'};font-size:13px;font-weight:600;color:${f.color||'var(--text)'}" onclick="executeMove(${wIdsJson},${fIdsJson},'${f.id}')">
+        📁 ${getFolderFullPath(f.id)}
+      </div>`).join('')}
+  `;
+  openModal('move-modal');
+}
+
+function openMoveMultiple(wIds){ openMoveMultipleItems(wIds,[]); }
+
+function executeMove(wIds, fIds, targetId){
+  // Move words
+  wIds.forEach(id=>{const w=words.find(x=>x.id===id);if(w)w.folder=targetId;});
+  // Move folders (change parentId)
+  fIds.forEach(fid=>{const f=folders.find(x=>x.id===fid);if(f)f.parentId=targetId||null;});
+  save();invalidateDescCache();selectedItems.clear();renderExplorer();closeModal('move-modal');
+  const parts=[];
+  if(fIds.length) parts.push(`${fIds.length} thư mục`);
+  if(wIds.length) parts.push(`${wIds.length} từ`);
+  toast(`📁 Đã chuyển ${parts.join(' và ')}!`);
+}
+
+function moveMultiple(wIds,fid){ executeMove(wIds,[],fid); }
+function moveFolderTo(fid,newParentId){ executeMove([],[fid],newParentId); }
+
+// ═══════════════════════════════════════════
+//  IMPORT EXCEL
+// ═══════════════════════════════════════════
+let pendingImport=[];
+function dragOver(e){e.preventDefault();document.getElementById('import-drop').classList.add('drag');}
+function dragLeave(){document.getElementById('import-drop').classList.remove('drag');}
+function dropFile(e){e.preventDefault();dragLeave();const f=e.dataTransfer.files[0];if(f)processExcel(f);}
+function handleExcelFile(e){const f=e.target.files[0];if(f)processExcel(f);}
+
+function processExcel(file){
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+      if(!rows.length){
+        const prev=document.getElementById('import-preview');
+        prev.style.display='block';prev.innerHTML='<p style="color:var(--red)">⚠️ File trống.</p>';return;
+      }
+      pendingImport=[];
+      const validTypes=['noun','verb','adj','adv','phrase'];
+
+      // Try to detect columns from header row
+      const header=rows[0].map(h=>(h||'').toString().toLowerCase().trim());
+      // Mapping keywords → field
+      const colMap={en:-1,vi:-1,ph:-1,type:-1,ex:-1,folder:-1};
+      // Use arrays of [exact, partial] — exact checked first, then partial only for longer strings (>=4 chars)
+      // to avoid false matches like "vi" inside "ví dụ", "từ" inside "loại từ"
+      function matchCol(h, keys){
+        // First try exact match
+        if(keys.some(k=>h===k)) return true;
+        // Then partial match only for keys with 4+ chars
+        return keys.filter(k=>k.length>=4).some(k=>h.includes(k));
+      }
+      const enKeys=['tiếng anh','english','en','word'];
+      const viKeys=['tiếng việt','vietnamese','nghĩa','meaning','định nghĩa','việt'];
+      const phKeys=['phiên âm','phonetic','pronunciation','ph','ipa'];
+      const typeKeys=['loại từ','word type','loai tu','loại từ'];
+      const exKeys=['ví dụ','example','sentence','câu ví dụ'];
+      const folderKeys=['thư mục','folder','danh mục','danh muc','thu muc'];
+      header.forEach((h,i)=>{
+        if(colMap.en<0 && matchCol(h,enKeys)) colMap.en=i;
+        else if(colMap.vi<0 && matchCol(h,viKeys)) colMap.vi=i;
+        else if(colMap.ph<0 && matchCol(h,phKeys)) colMap.ph=i;
+        else if(colMap.type<0 && matchCol(h,typeKeys)) colMap.type=i;
+        else if(colMap.ex<0 && matchCol(h,exKeys)) colMap.ex=i;
+        else if(colMap.folder<0 && matchCol(h,folderKeys)) colMap.folder=i;
+      });
+      // Fallback to positional if not detected
+      const useHeader=(colMap.en>=0||colMap.vi>=0);
+      const startRow=useHeader?1:1; // always skip row 0 (header)
+      if(!useHeader){ colMap.en=0;colMap.vi=1;colMap.ph=2;colMap.type=3;colMap.ex=4;colMap.folder=5; }
+
+      for(let i=startRow;i<rows.length;i++){
+        const r=rows[i];
+        const en=(r[colMap.en]??'').toString().trim();
+        const vi=(r[colMap.vi]??'').toString().trim();
+        if(!en||!vi) continue;
+        const rawType=(colMap.type>=0?(r[colMap.type]??''):'').toString().toLowerCase().trim();
+        const type=validTypes.includes(rawType)?rawType:'noun';
+        const ph=(colMap.ph>=0?(r[colMap.ph]??''):'').toString().trim();
+        const ex=(colMap.ex>=0?(r[colMap.ex]??''):'').toString().trim();
+        const folderPath=(colMap.folder>=0?(r[colMap.folder]??''):'').toString().trim();
+        pendingImport.push({en,vi,ph,type,ex,folderPath});
+      }
+
+      const prev=document.getElementById('import-preview');
+      if(!pendingImport.length){prev.style.display='block';prev.innerHTML='<p style="color:var(--red)">⚠️ Không tìm thấy dữ liệu hợp lệ. Kiểm tra lại định dạng cột.</p>';return;}
+      const typeLabel={noun:'Danh từ',verb:'Động từ',adj:'Tính từ',adv:'Trạng từ',phrase:'Cụm từ'};
+      // Check if any word has a folderPath
+      const hasFolderCol=pendingImport.some(w=>w.folderPath);
+      prev.style.display='block';
+      prev.innerHTML=`<div style="font-size:13px;font-weight:700;margin-bottom:4px;color:var(--green)">✅ Tìm thấy ${pendingImport.length} từ</div>`
+        +(hasFolderCol?`<div style="font-size:11px;color:var(--a3);margin-bottom:8px;font-weight:600">📁 Phát hiện cột Thư mục — thư mục sẽ được tạo tự động</div>`:'')
+        +`<div style="max-height:200px;overflow-y:auto;font-size:12px;color:var(--text2)">`
+        +pendingImport.slice(0,30).map(w=>`
+          <div style="padding:5px 0;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:baseline;flex-wrap:wrap">
+            <b style="color:var(--text)">${w.en}</b>
+            ${w.ph?`<span style="color:var(--accent);font-family:'Space Mono',monospace;font-size:10px">${w.ph}</span>`:''}
+            <span style="color:var(--text2)">— ${w.vi}</span>
+            <span style="color:var(--text3);font-size:10px">${typeLabel[w.type]||w.type}</span>
+            ${w.folderPath?`<span style="color:var(--a3);font-size:10px;margin-left:auto">📁 ${w.folderPath}</span>`:''}
+          </div>`).join('')
+        +(pendingImport.length>30?`<div style="padding:4px 0;color:var(--text3)">...và ${pendingImport.length-30} từ nữa</div>`:'')
+        +`</div>`;
+      document.getElementById('import-confirm-btn').style.display='inline-block';
+    }catch(err){toast('❌ Lỗi đọc file: '+err.message);}
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function confirmImport(){
+  if(!pendingImport.length) return;
+  // Reset any leftover dup state from previous import
+  dupQueue=[]; dupFreshIds=[]; dupResolved=0;
+  // Reload words from localStorage to ensure we compare against latest saved state
+  words = JSON.parse(localStorage.getItem(STORE_WORDS) || 'null') || [];
+  nextId = words.length ? Math.max(...words.map(w=>w.id))+1 : 1;
+  const defaultFid=document.getElementById('import-folder').value||null;
+
+  // Helper: find or create folder by full path (e.g. "IELTS › Speaking › Part 1")
+  // Separators: › > / | —
+  function getOrCreateFolderByPath(pathStr){
+    if(!pathStr||!pathStr.trim()) return defaultFid;
+    const parts=pathStr.split(/[›>|\/\\—]/).map(s=>s.trim()).filter(Boolean);
+    if(!parts.length) return defaultFid;
+    let parentId=null;
+    for(const part of parts){
+      let f=folders.find(x=>x.name===part && (x.parentId||null)===(parentId||null));
+      if(!f){
+        const newFid='f'+(Date.now()+Math.random()).toString(36).replace('.','');
+        f={id:newFid,name:part,color:'#7c6af7',parentId:parentId||null};
+        folders.push(f);
+      }
+      parentId=f.id;
+    }
+    return parentId;
+  }
+
+  // Check if any pendingImport word has a folderPath
+  const hasFolderPaths=pendingImport.some(w=>w.folderPath);
+
+  // Separate duplicates from new words
+  const dupes=[];
+  const fresh=[];
+  pendingImport.forEach(w=>{
+    const fid=hasFolderPaths?getOrCreateFolderByPath(w.folderPath):defaultFid;
+    const existing=words.find(x=>x.en.toLowerCase()===w.en.toLowerCase());
+    if(existing) dupes.push({incoming:w, existing, folder:fid});
+    else fresh.push({...w, resolvedFid:fid});
+  });
+  // Add non-duplicate words immediately, track IDs for rollback
+  const freshIds=[];
+  fresh.forEach(w=>{
+    const newId=nextId++;
+    freshIds.push(newId);
+    words.push({id:newId,en:w.en,ph:w.ph,vi:w.vi,type:w.type,ex:w.ex,folder:w.resolvedFid,starred:false,sm:{ef:2.5,interval:0,reps:0,nextReview:Date.now(),level:0}});
+  });
+  if(dupes.length){
+    // Show conflict resolver
+    startDupResolve(dupes, fresh.length, 'excel', freshIds);
+  } else {
+    save();renderExplorer();renderOverview();
+    toast(`✅ Đã nhập ${fresh.length} từ!`);
+    // Reset form
+    pendingImport=[];
+    document.getElementById('import-preview').style.display='none';
+    document.getElementById('import-confirm-btn').style.display='none';
+    document.getElementById('excel-file').value='';
+    closeModal('import-excel-modal');
+  }
+}
+
+// ═══════════════════════════════════════════
+//  FOLDER STUDY
+// ═══════════════════════════════════════════
+function startFolderStudy(folderId){
+  const f=folders.find(x=>x.id===folderId);
+  const pool=getFolderWords(folderId,true);
+  if(!pool.length){toast('⚠️ Thư mục này chưa có từ nào!');return;}
+
+  showTab('learn');
+  const ls=document.getElementById('learn-start');
+  ls.style.display='block';
+  document.getElementById('learn-game').style.display='none';
+  document.getElementById('learn-game').innerHTML='';
+
+  const newWords=pool.filter(w=>w.sm.reps===0);
+  const reviewWords=pool.filter(w=>w.sm.reps>0);
+
+  ls.innerHTML=`
+    <h2>📖 ${f.name}</h2>
+    <p style="color:var(--text2);font-size:13px;margin-bottom:24px">Chọn chế độ học cho thư mục này (bao gồm thư mục con)</p>
+    <div class="mode-opts" style="max-width:500px">
+      <div class="mode-opt ${newWords.length?'':'dis'}" onclick="${newWords.length?`launchFolderLearn('${folderId}')`:''}" style="${newWords.length?'':'opacity:.45;cursor:not-allowed'}" >
+        <div class="ico">🎓</div>
+        <div class="name">Học từ mới</div>
+        <div class="desc">${newWords.length} từ chưa học · 4 bước tuần tự</div>
+      </div>
+      <div class="mode-opt ${reviewWords.length?'':'dis'}" onclick="${reviewWords.length?`launchFolderReview('${folderId}')`:''}" style="${reviewWords.length?'':'opacity:.45;cursor:not-allowed'}">
+        <div class="ico">🔁</div>
+        <div class="name">Ôn tập</div>
+        <div class="desc">${reviewWords.length} từ đã học · chấm điểm</div>
+      </div>
+    </div>
+    <br><button class="btn btn-ghost btn-sm" onclick="renderLearnStart()">← Quay lại</button>
+  `;
+}
+
+// ── Học từ mới trong thư mục: 4 bước tuần tự ──
+let fsLearnPool=[], fsLearnStep=0, fsLearnScores={}, fsLearnFolderId=null;
+const FS_LEARN_STEPS=['flashcard','match','quiz','write'];
+
+window.launchFolderLearn=function(folderId){
+  const pool=getFolderWords(folderId,true).filter(w=>w.sm.reps===0);
+  if(!pool.length){toast('⚠️ Không còn từ mới!');return;}
+  fsLearnFolderId=folderId;
+  fsLearnPool=shuffle([...pool]).slice(0,5);
+  fsLearnStep=0;
+  fsLearnScores={};
+  fsLearnPool.forEach(w=>{fsLearnScores[w.id]=[];w._wasNew=w.sm.reps===0;});
+  document.getElementById('learn-start').style.display='none';
+  document.getElementById('learn-game').style.display='block';
+  setFixedBack(()=>{startFolderStudy(folderId);hideFixedBack();});
+  runFSLearnStep();
+};
+
+function runFSLearnStep(){
+  const game=document.getElementById('learn-game');
+  // Vẽ thanh bước
+  const icons=['🃏','🔗','❓','✍️'], names=['Flashcard','Ghép đôi','Trắc nghiệm','Viết'];
+  const stepsHtml=FS_LEARN_STEPS.map((_,i)=>{
+    const cls=i<fsLearnStep?'done':i===fsLearnStep?'active':'';
+    return `<div class="lstep ${cls}"><span class="sico">${icons[i]}</span>${names[i]}</div>`;
+  }).join('');
+  const hdr=document.createElement('div');
+  hdr.className='learn-steps';hdr.style.marginBottom='20px';hdr.innerHTML=stepsHtml;
+  game.innerHTML='';game.appendChild(hdr);
+  const wrap=document.createElement('div');game.appendChild(wrap);
+
+  const step=FS_LEARN_STEPS[fsLearnStep];
+  if(step==='flashcard') renderFC(wrap,fsLearnPool,onFSLearnStepDone,false,false);
+  else if(step==='match') renderMatch(wrap,fsLearnPool,onFSLearnStepDone);
+  else if(step==='quiz') renderQuiz(wrap,fsLearnPool,onFSLearnStepDone,getFolderWords(fsLearnFolderId,true));
+  else if(step==='write') renderWriteReview(wrap,fsLearnPool,onFSLearnStepDone,fsLearnScores);
+}
+
+function onFSLearnStepDone(correct,total){
+  const step=FS_LEARN_STEPS[fsLearnStep];
+  if(step!=='flashcard'){
+    const ratio=total>0?correct/total:0;
+    const q=Math.floor(ratio*5);
+    fsLearnPool.forEach(w=>{
+      if(!fsLearnScores[w.id]) fsLearnScores[w.id]=[];
+      fsLearnScores[w.id].push(q);
+    });
+  }
+  fsLearnStep++;
+  if(fsLearnStep>=FS_LEARN_STEPS.length){
+    // Cập nhật SM-2
+    fsLearnPool.forEach(w=>{
+      const orig=words.find(x=>x.id===w.id);
+      if(!orig) return;
+      const wasNew=w._wasNew;
+      const scores=fsLearnScores[w.id]||[];
+      const q=scores.length?Math.floor(scores.reduce((a,b)=>a+b,0)/scores.length):4;
+      orig.sm=sm2(orig.sm,q);
+      if(wasNew) orig.learnedAt=Date.now();
+    });
+    save();
+    showFSLearnComplete();
+    return;
+  }
+  runFSLearnStep();
+}
+
+function showFSLearnComplete(){
+  hideFixedBack();
+  const fid=fsLearnFolderId;
+  const remainNew=getFolderWords(fid,true).filter(w=>w.sm.reps===0).length;
+  const correct=fsLearnPool.reduce((acc,w)=>{
+    const scores=fsLearnScores[w.id]||[];
+    return acc+(scores.length&&scores.reduce((a,b)=>a+b,0)/scores.length>=3?1:0);
+  },0);
+  const pct=Math.round((correct/fsLearnPool.length)*100);
+  document.getElementById('learn-game').innerHTML=`<div class="res-wrap">
+    <div class="res-emoji">${pct>=80?'🏆':pct>=60?'😊':'💪'}</div>
+    <div class="res-score">${pct}%</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:20px">Đã học ${fsLearnPool.length} từ mới</div>
+    ${remainNew>0?`
+    <div style="font-size:13px;color:var(--accent);margin-bottom:16px">📚 Còn ${remainNew} từ chưa học trong thư mục này</div>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="launchFolderLearn('${fid}')">Học tiếp →</button>
+      <button class="btn btn-ghost" onclick="startFolderStudy('${fid}')">← Quay lại</button>
+    </div>`:`
+    <div style="font-size:13px;color:var(--green);margin-bottom:16px">✅ Đã học hết từ mới trong thư mục!</div>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="launchFolderReview('${fid}')">Ôn tập ngay →</button>
+      <button class="btn btn-ghost" onclick="startFolderStudy('${fid}')">← Quay lại</button>
+    </div>`}
+  </div>`;
+}
+
+// ── Ôn tập trong thư mục ──
+window.launchFolderReview=function(folderId){
+  const pool=getFolderWords(folderId,true).filter(w=>w.sm.reps>0);
+  if(!pool.length){toast('⚠️ Chưa có từ nào đã học!');return;}
+  const chosen=shuffle([...pool]).slice(0,20);
+
+  // Đảm bảo đang ở tab learn, ẩn learn-start, hiện learn-game
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sec-learn').classList.add('active');
+  document.getElementById('tab-learn').classList.add('active');
+  document.getElementById('learn-start').style.display='none';
+  document.getElementById('learn-game').style.display='block';
+  document.getElementById('learn-game').innerHTML='';
+
+  const game=document.getElementById('learn-game');
+  setFixedBack(()=>{startFolderStudy(folderId);hideFixedBack();});
+
+  function finalize(correct,total){
+    hideFixedBack();
+    const pct=Math.round((correct/(total||1))*100);
+    game.innerHTML=`<div class="res-wrap">
+      <div class="res-emoji">${pct>=80?'✍️✨':pct>=60?'😊':'💪'}</div>
+      <div class="res-score">${pct}%</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:20px">${correct} / ${total} từ đúng</div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="launchFolderReview('${folderId}')">Ôn lại →</button>
+        <button class="btn btn-ghost" onclick="startFolderStudy('${folderId}')">← Quay lại</button>
+      </div>
+    </div>`;
+  }
+
+  const reviewDistractor=getFolderWords(folderId,true).filter(w=>w.sm.reps>0);
+  renderQuiz(game,chosen,finalize,reviewDistractor.length>=4?reviewDistractor:getFolderWords(folderId,true));
+};
+
+// ═══════════════════════════════════════════
+//  LEARN
+// ═══════════════════════════════════════════
+let learnBatch=5;
+const LEARN_STEPS=['flashcard','match','quiz','write'];
+let learnPool=[], learnStep=0, learnScores={};
+
+function onBatchInput(val){
+  const n = Math.max(1, parseInt(val)||1);
+  learnBatch = n;
+  appSettings.sessionSize = n;
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(appSettings));
+}
+
+function renderLearnStart(){
+  const ls=document.getElementById('learn-start');
+  ls.style.display='block';
+  document.getElementById('learn-game').style.display='none';
+  document.getElementById('learn-game').innerHTML='';
+  hideFixedBack();
+  const newWords=words.filter(w=>w.sm.reps===0);
+  ls.innerHTML=`
+    <h2>🎓 Học từ mới</h2>
+    <p>Học từ chưa biết qua 4 bước tuần tự.<br>Hoàn thành đủ → từ được đưa vào hệ thống ôn tập.</p>
+    <div style="margin-bottom:20px;max-width:560px;margin-left:auto;margin-right:auto">
+      <div class="learn-steps" style="margin-bottom:0">
+        <div class="lstep active"><span class="sico">🃏</span>1. Flashcard</div>
+        <div class="lstep"><span class="sico">🔗</span>2. Ghép đôi</div>
+        <div class="lstep"><span class="sico">❓</span>3. Trắc nghiệm</div>
+        <div class="lstep"><span class="sico">✍️</span>4. Viết</div>
+      </div>
+    </div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:20px">📚 ${newWords.length} từ chưa học</div>
+    <button class="btn btn-primary" onclick="startLearn()" style="font-size:15px;padding:13px 36px">Bắt đầu học →</button>
+  `;
+}
+
+function startLearn(){
+  const pool=words.filter(w=>w.sm.reps===0);
+  if(!pool.length){toast('⚠️ Không có từ chưa học!');return;}
+  learnPool=shuffle(pool).slice(0,Math.min(learnBatch,pool.length));
+  if(!learnPool.length){toast('⚠️ Không có từ nào để học!');return;}
+  learnStep=0;
+  learnScores={};
+  learnPool.forEach(w=>{learnScores[w.id]=[];w._wasNew=w.sm.reps===0;});
+  document.getElementById('learn-start').style.display='none';
+  document.getElementById('learn-game').style.display='block';
+  const backCb=()=>{ renderLearnStart(); hideFixedBack(); };
+  setFixedBack(backCb);
+  runLearnStep();
+}
+
+function runLearnStep(){
+  const game=document.getElementById('learn-game');
+  renderLearnStepHeader(game);
+  const step=LEARN_STEPS[learnStep];
+  if(step==='flashcard') renderFC(game,learnPool,onLearnStepDone,false,false);
+  else if(step==='match') renderMatch(game,learnPool,onLearnStepDone);
+  else if(step==='quiz') renderQuiz(game,learnPool,onLearnStepDone,learnPool);
+  else if(step==='write') renderWriteReview(game,learnPool,onLearnStepDone,learnScores);
+}
+
+function renderLearnStepHeader(container){
+  const icons=['🃏','🔗','❓','✍️'], names=['Flashcard','Ghép đôi','Trắc nghiệm','Viết'];
+  const stepsHtml=LEARN_STEPS.map((_,i)=>{
+    const cls=i<learnStep?'done':i===learnStep?'active':'';
+    return `<div class="lstep ${cls}"><span class="sico">${icons[i]}</span>${names[i]}</div>`;
+  }).join('');
+  const hdr=document.createElement('div');
+  hdr.className='learn-steps';hdr.style.marginBottom='20px';hdr.innerHTML=stepsHtml;
+  const existing=container.querySelector('.learn-steps');
+  if(existing) existing.replaceWith(hdr);
+  else container.prepend(hdr);
+}
+
+function onLearnStepDone(correct,total){
+  // Track score for this step (except flashcard)
+  const step=LEARN_STEPS[learnStep];
+  if(step!=='flashcard'){
+    const ratio=total>0?correct/total:0;
+    const q=Math.floor(ratio*5);
+    learnPool.forEach(w=>{
+      if(!learnScores[w.id]) learnScores[w.id]=[];
+      learnScores[w.id].push(q);
+    });
+  }
+  learnStep++;
+  if(learnStep>=LEARN_STEPS.length){
+    // Compute final SM-2 quality per word from average of tracked scores
+    learnPool.forEach(w=>{
+      const orig=words.find(x=>x.id===w.id);
+      if(!orig) return;
+      const wasNew=w._wasNew;
+      const scores=learnScores[w.id]||[];
+      const q=scores.length?Math.floor(scores.reduce((a,b)=>a+b,0)/scores.length):4;
+      orig.sm=sm2(orig.sm,q);
+      if(wasNew) orig.learnedAt=Date.now();
+    });
+    save();showLearnComplete();return;
+  }
+  runLearnStep();
+}
+
+function showLearnComplete(){
+  hideFixedBack();
+  const remainNew=words.filter(w=>w.sm.reps===0).length;
+  document.getElementById('learn-game').innerHTML=`<div class="res-wrap">
+    <div class="res-emoji">🏆</div>
+    <div style="font-size:24px;font-weight:800;margin-bottom:8px">Hoàn thành phiên học!</div>
+    <div style="font-size:14px;color:var(--text2);margin-bottom:20px">Bạn đã học xong ${learnPool.length} từ mới.<br>Các từ đã được đưa vào hệ thống ôn tập SM-2.</div>
+    ${remainNew>0?`
+    <div style="font-size:13px;color:var(--accent);margin-bottom:16px">📚 Còn ${remainNew} từ chưa học</div>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="startLearn()">Học 5 từ tiếp →</button>
+      <button class="btn btn-ghost" onclick="renderLearnStart()">← Quay lại</button>
+    </div>`:`
+    <div style="font-size:13px;color:var(--green);margin-bottom:16px">✅ Bạn đã học hết tất cả từ mới!</div>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-ghost" onclick="renderLearnStart()">← Quay lại</button>
+    </div>`}
+  </div>`;
+}
+
+// ═══════════════════════════════════════════
+//  REVIEW
+// ═══════════════════════════════════════════
+let reviewMode='flashcard';
+function selectReviewMode(m,el){
+  reviewMode=m;
+  document.querySelectorAll('.mode-opt').forEach(o=>o.classList.remove('on'));
+  el.classList.add('on');
+}
+function renderReviewStart(){
+  const due=dueWords();
+  document.getElementById('review-due-msg').textContent=
+    due.length?`⏰ Có ${due.length} từ cần ôn hôm nay!`:'✅ Không có từ cần ôn hôm nay. Có thể ôn tự do.';
+  document.getElementById('review-start').style.display='block';
+  document.getElementById('review-game').style.display='none';
+  document.getElementById('review-game').innerHTML='';
+  hideFixedBack();
+}
+function startReview(){
+  let pool=dueWords();
+  if(!pool.length) pool=[...words];
+  if(!pool.length){toast('⚠️ Chưa có từ vựng nào!');return;}
+  pool=shuffle(pool).slice(0,20);
+  document.getElementById('review-start').style.display='none';
+  document.getElementById('review-game').style.display='block';
+  const game=document.getElementById('review-game');
+  const backCb=()=>{ onReviewDone(); };
+  setFixedBack(backCb);
+
+  if(reviewMode==='flashcard'){
+    renderFC(game,pool,onReviewDone,false,false);
+  } else if(reviewMode==='match'){
+    runReviewGame('match',pool,game);
+  } else if(reviewMode==='quiz'){
+    runReviewGame('quiz',pool,game);
+  } else if(reviewMode==='write'){
+    runReviewGame('write',pool,game);
+  }
+}
+
+// Run a single game mode and update SM-2 based on result
+function runReviewGame(mode, pool, game){
+  // scoreMap: wordId -> [scores]
+  const scoreMap={};
+  pool.forEach(w=>scoreMap[w.id]=[]);
+
+  function finalize(){
+    // Update SM-2 for each word based on their scores
+    pool.forEach(w=>{
+      const scores=scoreMap[w.id];
+      if(!scores.length) return;
+      const avg=scores.reduce((a,b)=>a+b,0)/scores.length;
+      const q=Math.floor(avg);
+      const orig=words.find(x=>x.id===w.id);
+      if(orig){orig.sm=sm2(orig.sm,q);save();}
+    });
+    onReviewDone();
+  }
+
+  function onGameDone(correct,total){
+    // Calculate quality for each word based on correct/total ratio
+    // Since individual word scores aren't tracked per game, use overall ratio
+    const ratio=total>0?correct/total:0;
+    const q=Math.floor(ratio*5);
+    pool.forEach(w=>scoreMap[w.id].push(q));
+    finalize();
+  }
+
+  if(mode==='match') renderMatch(game,pool,onGameDone);
+  else if(mode==='quiz') renderQuiz(game,pool,onGameDone,words.filter(w=>w.sm.reps>0));
+  else if(mode==='write') renderWriteReview(game,pool,onGameDone,scoreMap);
+}
+
+function onReviewDone(){
+  renderReviewStart();
+  renderOverview();
+  hideFixedBack();
+}
+
+// ═══════════════════════════════════════════
+//  FLASHCARD ENGINE
+// ═══════════════════════════════════════════
+function renderFC(container, pool, onDone, updateSM=false){
+  let idx=0, flipped=false;
+  const cards=shuffle([...pool]);
+
+  function html(){
+    container.innerHTML='';
+    const wrap=document.createElement('div');
+    wrap.style.cssText='display:flex;flex-direction:column;align-items:center;gap:20px';
+
+    const progBar=document.createElement('div');
+    progBar.style.cssText='width:100%;max-width:580px';
+    progBar.innerHTML=`<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:6px">
+      <span id="fc-ctr">${idx+1} / ${cards.length}</span><span>Nhấn thẻ để lật</span></div>
+      <div class="prog-bar"><div class="prog-fill" id="fc-prog" style="width:${((idx+1)/cards.length)*100}%"></div></div>`;
+
+    const scene=document.createElement('div');
+    scene.className='fc-scene';
+    const inner=document.createElement('div');
+    inner.className='fc-inner';inner.id='fc-inner';
+    const w=cards[idx];
+    inner.innerHTML=`
+      <div class="fc-face fc-front">
+        <div class="fc-hint">TIẾNG ANH</div>
+        <div class="fc-word">${w.en}</div>
+        <div class="fc-ph">${w.ph||''}</div>
+        <span class="${lvClass(w.sm.level)}">${lvLabel(w.sm.level)}</span>
+      </div>
+      <div class="fc-face fc-back">
+        <div class="fc-hint">TIẾNG VIỆT</div>
+        <div class="fc-meaning">${w.vi}</div>
+        <div class="fc-ex">${w.ex||''}</div>
+      </div>`;
+    scene.appendChild(inner);
+
+    const ctrl=document.createElement('div');
+    ctrl.className='fc-controls';
+    if(updateSM){
+      ctrl.innerHTML=`
+        <button class="fc-btn nav" onclick="fcPrev()">◀</button>
+        <button class="fc-btn nav" onclick="window.speak(cards[idx].en)">🔊</button>
+        <button class="fc-btn nav" onclick="fcNext()">▶</button>
+        <button class="fc-btn nav" onclick="fcEditCurrent()" title="Sửa từ" style="font-size:13px">✏️</button>`;
+    } else {
+      ctrl.innerHTML=`
+        <button class="fc-btn nav" onclick="fcPrev()">◀</button>
+        <button class="fc-btn nav" onclick="window.speak(cards[idx].en)">🔊</button>
+        <button class="fc-btn nav" onclick="fcNext()">▶</button>
+        <button class="fc-btn nav" onclick="fcEditCurrent()" title="Sửa từ" style="font-size:13px">✏️</button>`;
+    }
+
+    wrap.appendChild(progBar);wrap.appendChild(scene);wrap.appendChild(ctrl);
+    container.appendChild(wrap);
+
+    window.fcEditCurrent=function(){
+      const w=cards[idx];
+      const orig=words.find(x=>x.id===w.id);
+      if(!orig) return;
+      // Open quick edit modal
+      openEdit(orig.id);
+      // After saving, update cards array too
+      const origSave=window.saveWord;
+      window.saveWord=function(){
+        origSave();
+        // sync updated word back to cards
+        const updated=words.find(x=>x.id===orig.id);
+        if(updated){Object.assign(cards[idx],updated);}
+        render();
+        window.saveWord=origSave;
+      };
+    };
+    window.fcMark=function(q){
+      if(updateSM){const orig=words.find(x=>x.id===cards[idx].id);if(orig){orig.sm=sm2(orig.sm,q);save();}}
+      fcNext();
+    };
+    window.fcNext=function(){if(idx<cards.length-1){idx++;render();}else onDone(0,cards.length);};
+    window.fcPrev=function(){if(idx>0){idx--;render();}};
+    window.cards=cards;
+
+    if(appSettings.autoSpeak) speak(w.en);
+  }
+
+  function flipCard(){
+    const el=document.getElementById('fc-inner');
+    if(el) el.classList.toggle('flipped');
+    flipped=!flipped;
+    if(flipped && appSettings.autoSpeakFlip) speak(cards[idx].vi);
+  }
+
+  function render(){
+    flipped=false;
+    const w=cards[idx];
+    const ctr=document.getElementById('fc-ctr');
+    const prog=document.getElementById('fc-prog');
+    const inner=document.getElementById('fc-inner');
+    if(ctr) ctr.textContent=`${idx+1} / ${cards.length}`;
+    if(prog) prog.style.width=`${((idx+1)/cards.length)*100}%`;
+    if(inner){
+      inner.classList.remove('flipped');
+      inner.innerHTML=`
+        <div class="fc-face fc-front">
+          <div class="fc-hint">TIẾNG ANH</div>
+          <div class="fc-word">${w.en}</div>
+          <div class="fc-ph">${w.ph||''}</div>
+          ${w.sm.reps===0?`<span class="lv" style="background:rgba(150,150,180,.12);color:var(--text3);border:1px solid rgba(150,150,180,.2)">📘 Chưa học</span>`:`<span class="${lvClass(w.sm.level)}">${lvLabel(w.sm.level)}</span>`}
+        </div>
+        <div class="fc-face fc-back">
+          <div class="fc-hint">TIẾNG VIỆT</div>
+          <div class="fc-meaning">${w.vi}</div>
+          <div class="fc-ex">${w.ex||''}</div>
+        </div>`;
+    }
+    window.idx=idx;
+    if(appSettings.autoSpeak) speak(w.en);
+  }
+
+  html();
+  container.querySelector('.fc-scene').onclick=flipCard;
+  window.idx=idx;
+}
+
+// ═══════════════════════════════════════════
+//  MATCH ENGINE
+// ═══════════════════════════════════════════
+function renderMatch(container, pool, onDone){
+  const cards=shuffle([...pool]).slice(0,Math.min(8,pool.length));
+  let selected=null, matched=new Set();
+  const enShuffled=shuffle([...cards]);
+  const viShuffled=shuffle([...cards]);
+
+  function build(){
+    container.innerHTML=`
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap">
+        <span style="font-size:13px;color:var(--text2)" id="match-info">0 / ${cards.length} cặp</span>
+      </div>
+      <div class="prog-bar" style="margin-bottom:16px"><div class="prog-fill" id="match-prog" style="width:0%"></div></div>
+      <div class="match-row-label">TIẾNG ANH</div>
+      <div class="match-row" id="match-en-row">
+        ${enShuffled.map(w=>`<div class="mc" id="en-${w.id}" data-id="${w.id}" onclick="selectMC('en',${w.id},this)">${w.en}</div>`).join('')}
+      </div>
+      <div class="match-row-label">TIẾNG VIỆT</div>
+      <div class="match-row" id="match-vi-row">
+        ${viShuffled.map(w=>`<div class="mc" id="vi-${w.id}" data-id="${w.id}" onclick="selectMC('vi',${w.id},this)">${w.vi}</div>`).join('')}
+      </div>
+    `;
+
+
+    window.selectMC=function(side,id,el){
+      if(el.classList.contains('matched')) return;
+      if(selected){
+        if(selected.el===el){el.classList.remove('sel');selected=null;return;}
+        if(selected.id===id && selected.side!==side){
+          el.classList.remove('sel');el.classList.add('matched');
+          selected.el.classList.remove('sel');selected.el.classList.add('matched');
+          matched.add(id);selected=null;
+          const pct=(matched.size/cards.length)*100;
+          const pi=document.getElementById('match-prog');if(pi)pi.style.width=pct+'%';
+          const mi=document.getElementById('match-info');if(mi)mi.textContent=`${matched.size} / ${cards.length} cặp`;
+          const orig=words.find(x=>x.id===id);if(orig){orig.sm=sm2(orig.sm,5);save();}
+          speak(words.find(x=>x.id===id)?.en||'');
+          if(matched.size===cards.length){
+
+            setTimeout(()=>{
+              container.innerHTML=`<div class="res-wrap">
+                <div class="res-emoji">⚡</div>
+                <div style="font-size:22px;font-weight:800;margin-bottom:8px">Hoàn thành!</div>
+                <div style="font-size:14px;color:var(--text2);margin-bottom:24px">Bạn đã ghép đúng tất cả ${cards.length} cặp!</div>
+                <button class="btn btn-primary" onclick="matchOnDone()">Tiếp tục →</button>
+              </div>`;
+              window.matchOnDone=()=>onDone(cards.length,cards.length);
+            },500);
+          }
+        } else {
+          el.classList.add('shake');selected.el.classList.add('shake');
+          setTimeout(()=>{el.classList.remove('shake','sel');selected.el.classList.remove('shake','sel');selected=null;},400);
+          const orig=words.find(x=>x.id===id);if(orig){orig.sm=sm2(orig.sm,1);save();}
+        }
+      } else {
+        document.querySelectorAll('.mc.sel').forEach(e=>e.classList.remove('sel'));
+        el.classList.add('sel');selected={id,side,el};
+      }
+    };
+    window.endMatch=()=>{onDone(0,cards.length);};
+  }
+  build();
+}
+
+// ═══════════════════════════════════════════
+//  QUIZ ENGINE (retry on wrong)
+// ═══════════════════════════════════════════
+function renderQuiz(container, pool, onDone, distractorPool=null){
+  const qs=shuffle([...pool]).slice(0,Math.min(pool.length,10));
+  let idx=0, correct=0, wrong=0, answered=false, wrongThisQ=false;
+
+  function render(){
+    answered=false; wrongThisQ=false;
+    const q=qs[idx];
+    const dPool=(distractorPool||words).filter(w=>w.id!==q.id);
+    const others=shuffle(dPool).slice(0,3);
+    const opts=shuffle([q,...others]);
+    container.innerHTML=`
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <span style="font-size:12px;color:var(--text2)">Câu ${idx+1} / ${qs.length}</span>
+        <div style="display:flex;gap:16px">
+          <span style="font-size:13px;color:var(--green);font-weight:700">✅ ${correct}</span>
+          <span style="font-size:13px;color:var(--red);font-weight:700">❌ ${wrong}</span>
+        </div>
+      </div>
+      <div class="prog-bar" style="margin-bottom:16px"><div class="prog-fill" style="width:${(idx/qs.length)*100}%"></div></div>
+      <div class="qz-box">
+        <div style="font-size:10px;color:var(--text2);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">TIẾNG ANH</div>
+        <div class="qz-q">${q.en}</div>
+        <div class="qz-sub">${q.ph||''}</div>
+        <button class="btn-icon" style="margin-top:10px" onclick="speak('${q.en.replace(/'/g,"\\'")}')">🔊</button>
+      </div>
+      <div class="qz-opts" id="qz-opts">
+        ${opts.map(o=>`<button class="qz-opt" data-correct="${o.id===q.id}" onclick="answerQ(${o.id===q.id},this,'${q.id}')">${o.vi}</button>`).join('')}
+      </div>
+      <div id="qz-fb" style="display:none"></div>
+      <div style="text-align:center"><button class="btn btn-primary" id="qz-next" onclick="nextQ()" style="display:none;min-width:140px">Tiếp →</button></div>
+    `;
+    window.answerQ=function(isCorrect,el,qid){
+      if(answered) return;
+      if(isCorrect){
+        answered=true;
+        document.querySelectorAll('.qz-opt').forEach(b=>b.classList.add('dis'));
+        el.classList.add('cor');
+        if(!wrongThisQ) correct++; else wrong++;
+        const cWord=qs[idx];
+        const orig=words.find(x=>x.id===cWord.id);
+        if(orig){orig.sm=sm2(orig.sm,wrongThisQ?2:4);save();}
+        const fb=document.getElementById('qz-fb');
+        fb.className='fb cor';fb.textContent='✅ Chính xác!';fb.style.display='block';
+        document.getElementById('qz-next').style.display='inline-block';
+        speak(cWord.en);
+      } else {
+        // wrong: shake and allow retry
+        wrongThisQ=true;
+        el.classList.add('wrg');
+        el.classList.add('dis');
+        el.onclick=null;
+        setTimeout(()=>el.classList.remove('wrg'),600);
+        const fb=document.getElementById('qz-fb');
+        fb.className='fb wrg';fb.textContent='❌ Sai! Thử lại nhé.';fb.style.display='block';
+      }
+    };
+    window.nextQ=function(){
+      idx++;
+      if(idx>=qs.length) showQuizResults();
+      else render();
+    };
+  }
+
+  function showQuizResults(){
+    const pct=Math.round((correct/qs.length)*100);
+    const emoji=pct>=80?'🏆':pct>=60?'😊':'💪';
+    container.innerHTML=`<div class="res-wrap">
+      <div class="res-emoji">${emoji}</div>
+      <div class="res-score">${pct}%</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:8px">${correct} / ${qs.length} câu đúng</div>
+      <div class="res-bd">
+        <div class="rb"><div class="n" style="color:var(--green)">${correct}</div><div class="l">Đúng</div></div>
+        <div class="rb"><div class="n" style="color:var(--red)">${wrong}</div><div class="l">Sai</div></div>
+      </div>
+      <button class="btn btn-primary" onclick="quizOnDone()">Tiếp tục →</button>
+    </div>`;
+    window.quizOnDone=()=>onDone(correct,qs.length);
+  }
+
+  render();
+}
+
+// ═══════════════════════════════════════════
+//  WRITE ENGINE (retry on wrong)
+// ═══════════════════════════════════════════
+function renderWrite(container, pool, onDone){
+  renderWriteCore(container, pool, onDone, null, true);
+}
+
+function renderWriteReview(container, pool, onDone, scoreMap){
+  renderWriteCore(container, pool, onDone, scoreMap, false);
+}
+
+function renderWriteCore(container, pool, onDone, scoreMap, updateSMDirect){
+  const ws2=shuffle([...pool]).slice(0,Math.min(pool.length,10));
+  let idx=0, correct=0, wrong=0, answered=false, wrongThisW=false, helpUsed=false;
+
+  function render(){
+    answered=false; wrongThisW=false; helpUsed=false;
+    const w=ws2[idx];
+    container.innerHTML=`
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <span style="font-size:12px;color:var(--text2)">${idx+1} / ${ws2.length}</span>
+        <div style="display:flex;gap:16px">
+          <span style="font-size:13px;color:var(--green);font-weight:700">✅ ${correct}</span>
+          <span style="font-size:13px;color:var(--red);font-weight:700">❌ ${wrong}</span>
+        </div>
+      </div>
+      <div class="prog-bar" style="margin-bottom:16px"><div class="prog-fill" style="width:${(idx/ws2.length)*100}%"></div></div>
+      <div class="wr-prompt">
+        <div style="font-size:10px;color:var(--text2);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">TIẾNG VIỆT → GÕ TIẾNG ANH</div>
+        <div class="wr-vi">${w.vi}</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:4px">${w.type?'('+w.type+')':''}</div>
+      </div>
+      <input class="wr-inp" id="wr-inp" type="text" placeholder="Gõ từ tiếng Anh..." autocomplete="off" autocorrect="off" spellcheck="false" onkeydown="wrKey(event)">
+      <div id="wr-fb" style="display:none"></div>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap">
+        <button class="btn btn-primary" id="wr-check" onclick="checkWrite('${w.en.replace(/'/g,"\\'")}')">Kiểm tra ✓</button>
+        <button class="btn btn-ghost btn-sm" id="wr-next" onclick="nextWrite()" style="display:none">Tiếp →</button>
+        <button class="btn btn-ghost btn-sm" id="wr-retry" onclick="retryWrite()" style="display:none;border-color:rgba(124,106,247,.5);color:var(--accent)">🔄 Thử lại</button>
+        <button class="btn btn-ghost btn-sm" id="wr-override" onclick="overrideWrite('${w.en.replace(/'/g,"\\'")}',${w.id})" style="display:none;border-color:rgba(22,163,74,.4);color:var(--green)">✅ Tôi nhập đúng</button>
+        <button class="btn btn-ghost btn-sm" id="wr-help" onclick="helpWrite('${w.en.replace(/'/g,"\\'")}')">💡 Trợ giúp</button>
+        <button class="btn-icon" onclick="speak('${w.en.replace(/'/g,"\\'")}')">🔊</button>
+      </div>
+    `;
+    document.getElementById('wr-inp').focus();
+
+    // Gắn Enter lên document để hoạt động cả khi input bị disabled
+    if(window._wrKeyHandler) document.removeEventListener('keydown', window._wrKeyHandler);
+    window._wrKeyHandler=function(e){
+      if(e.key==='Enter'){
+        if(answered) nextWrite();
+        else{
+          const inp=document.getElementById('wr-inp');
+          if(inp&&inp.value.trim()) checkWrite(w.en);
+        }
+      }
+    };
+    document.addEventListener('keydown', window._wrKeyHandler);
+
+    window.wrKey=function(e){
+      // giữ lại để tương thích, nhưng document handler đã xử lý
+    };
+    window.checkWrite=function(answer){
+      const inp=document.getElementById('wr-inp');
+      const val=inp.value.trim().toLowerCase();
+      if(!val) return;
+      const ok=val===answer.toLowerCase();
+      if(ok){
+        answered=true;
+        inp.className='wr-inp cor';inp.disabled=true;
+        const quality=helpUsed?2:wrongThisW?2:4;
+        if(!wrongThisW&&!helpUsed) correct++; else wrong++;
+        if(updateSMDirect){
+          const orig=words.find(x=>x.id===w.id);
+          if(orig){orig.sm=sm2(orig.sm,quality);save();}
+        } else if(scoreMap){
+          if(!scoreMap[w.id]) scoreMap[w.id]=[];
+          scoreMap[w.id].push(quality);
+        }
+        const fb=document.getElementById('wr-fb');
+        fb.className='fb cor';fb.textContent='✅ Chính xác!';fb.style.display='block';
+        document.getElementById('wr-check').style.display='none';
+        document.getElementById('wr-help').style.display='none';
+        document.getElementById('wr-next').style.display='inline-block';
+        speak(answer);
+      } else {
+        wrongThisW=true;answered=true;
+        inp.className='wr-inp wrg';inp.disabled=true;
+        wrong++;
+        if(updateSMDirect){
+          const orig=words.find(x=>x.id===w.id);
+          if(orig){orig.sm=sm2(orig.sm,0);save();}
+        } else if(scoreMap){
+          if(!scoreMap[w.id]) scoreMap[w.id]=[];
+          scoreMap[w.id].push(0);
+        }
+        const fb=document.getElementById('wr-fb');
+        fb.className='fb wrg';fb.innerHTML='❌ Sai! Đáp án đúng: <b style="color:var(--a4)">"'+answer+'"</b>';fb.style.display='block';
+        document.getElementById('wr-check').style.display='none';
+        document.getElementById('wr-help').style.display='none';
+        document.getElementById('wr-next').style.display='inline-block';
+        document.getElementById('wr-retry').style.display='inline-block';
+        document.getElementById('wr-override').style.display='inline-block';
+        speak(answer);
+      }
+    };
+    window.retryWrite=function(){
+      const inp=document.getElementById('wr-inp');
+      inp.value='';inp.className='wr-inp';inp.disabled=false;
+      document.getElementById('wr-fb').style.display='none';
+      document.getElementById('wr-check').style.display='inline-block';
+      document.getElementById('wr-next').style.display='none';
+      document.getElementById('wr-retry').style.display='none';
+      answered=false;
+      inp.focus();
+    };
+    window.overrideWrite=function(answer, wid){
+      // đổi sai → đúng: hoàn tác wrong, tính correct, cập nhật SM-2 đúng
+      wrong--;correct++;
+      if(updateSMDirect){
+        const orig=words.find(x=>x.id===wid);
+        if(orig){orig.sm=sm2(orig.sm,4);save();}
+      } else if(scoreMap){
+        // thay score 0 cuối cùng thành 4
+        if(!scoreMap[wid]) scoreMap[wid]=[];
+        const arr=scoreMap[wid];
+        const lastIdx=arr.lastIndexOf(0);
+        if(lastIdx!==-1) arr[lastIdx]=4; else arr.push(4);
+      }
+      const fb=document.getElementById('wr-fb');
+      fb.className='fb cor';fb.innerHTML='✅ Đã tính đúng! <b style="color:var(--a4)">"'+answer+'"</b>';fb.style.display='block';
+      document.getElementById('wr-override').style.display='none';
+      document.getElementById('wr-retry').style.display='none';
+      const inp=document.getElementById('wr-inp');
+      inp.className='wr-inp cor';
+    };
+    window.helpWrite=function(answer){
+      helpUsed=true;
+      const inp=document.getElementById('wr-inp');
+      inp.disabled=true;
+      const fb=document.getElementById('wr-fb');
+      fb.className='fb wrg';fb.innerHTML='💡 Đáp án: <b style="color:var(--a4)">"'+answer+'"</b> — Thử gõ lại!';fb.style.display='block';
+      document.getElementById('wr-help').style.display='none';
+      document.getElementById('wr-retry').style.display='inline-block';
+      document.getElementById('wr-retry').textContent='🔄 Thử lại';
+      // Override retry to re-enable input after help
+      const origRetry=window.retryWrite;
+      window.retryWrite=function(){
+        inp.value='';inp.className='wr-inp';inp.disabled=false;
+        document.getElementById('wr-fb').style.display='none';
+        document.getElementById('wr-check').style.display='inline-block';
+        document.getElementById('wr-next').style.display='none';
+        document.getElementById('wr-retry').style.display='none';
+        answered=false;
+        inp.focus();
+        window.retryWrite=origRetry;
+      };
+    };
+    window.nextWrite=function(){
+      idx++;
+      if(idx>=ws2.length) showWriteResults();
+      else render();
+    };
+  }
+
+  function showWriteResults(){
+    if(window._wrKeyHandler){document.removeEventListener('keydown',window._wrKeyHandler);window._wrKeyHandler=null;}
+    const pct=Math.round((correct/ws2.length)*100);
+    const emoji=pct>=80?'✍️✨':pct>=60?'😊':'💪';
+    container.innerHTML=`<div class="res-wrap">
+      <div class="res-emoji">${emoji}</div>
+      <div class="res-score">${pct}%</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:8px">${correct} / ${ws2.length} từ đúng</div>
+      <div class="res-bd">
+        <div class="rb"><div class="n" style="color:var(--green)">${correct}</div><div class="l">Đúng</div></div>
+        <div class="rb"><div class="n" style="color:var(--red)">${wrong}</div><div class="l">Sai</div></div>
+      </div>
+      <button class="btn btn-primary" onclick="writeOnDone()">Tiếp tục →</button>
+    </div>`;
+    window.writeOnDone=()=>onDone(correct,ws2.length);
+  }
+
+  render();
+}
+
+window.onLearnStepDone=onLearnStepDone;
+window.onReviewDone=onReviewDone;
+
+// ═══════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════
+function shuffle(a){const r=[...a];for(let i=r.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[r[i],r[j]]=[r[j],r[i]];}return r;}
+
+let toastTimer=null;
+function toast(msg){
+  let el=document.querySelector('.toast');if(el)el.remove();
+  el=document.createElement('div');el.className='toast';el.textContent=msg;
+  document.body.appendChild(el);
+  if(toastTimer) clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.remove(),3000);
+}
+
+// ═══════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════
+//  SETTINGS
+// ═══════════════════════════════════════════
+const SETTINGS_KEY = 'flashlearn_settings';
+let appSettings = {
+  autoSpeak: false,
+  autoSpeakFlip: false,
+  voiceIndex: 0,
+  rate: 1,
+  sessionSize: 5
+};
+
+function loadSettings(){
+  try{
+    const s = JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}');
+    appSettings = Object.assign(appSettings, s);
+  } catch(e){}
+  // sync selRate
+  selRate = appSettings.rate;
+  learnBatch = appSettings.sessionSize || 5;
+}
+
+function saveSettings(){
+  appSettings.autoSpeak = document.getElementById('setting-autospeak').checked;
+  appSettings.autoSpeakFlip = document.getElementById('setting-autospeak-flip').checked;
+  appSettings.voiceIndex = parseInt(document.getElementById('setting-voice-sel').value)||0;
+  appSettings.rate = parseFloat(document.getElementById('setting-rate-sel').value)||1;
+  selRate = appSettings.rate;
+  // sync rate-sel in words tab too
+  const rsel = document.getElementById('rate-sel');
+  if(rsel) rsel.value = appSettings.rate;
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(appSettings));
+}
+
+function setVoiceFromSettings(){
+  const i = parseInt(document.getElementById('setting-voice-sel').value)||0;
+  selVoice = voices[i]||null;
+  appSettings.voiceIndex = i;
+  // sync voice-sel in words tab
+  const vsel = document.getElementById('voice-sel');
+  if(vsel) vsel.value = i;
+  saveSettings();
+}
+
+function setRateFromSettings(){
+  selRate = parseFloat(document.getElementById('setting-rate-sel').value)||1;
+  appSettings.rate = selRate;
+  const rsel = document.getElementById('rate-sel');
+  if(rsel) rsel.value = selRate;
+  saveSettings();
+}
+
+function renderSettings(){
+  // Session size input
+  const batchInp = document.getElementById('setting-batch-input');
+  if(batchInp) batchInp.value = appSettings.sessionSize || 5;
+  // Populate voice dropdown
+  const vsel = document.getElementById('setting-voice-sel');
+  if(vsel && voices.length){
+    vsel.innerHTML = voices.map((v,i)=>`<option value="${i}">${v.name} (${v.lang})</option>`).join('');
+    vsel.value = appSettings.voiceIndex;
+  }
+  // Set rate
+  const rsel = document.getElementById('setting-rate-sel');
+  if(rsel) rsel.value = appSettings.rate;
+  // Set toggles
+  document.getElementById('setting-autospeak').checked = appSettings.autoSpeak;
+  document.getElementById('setting-autospeak-flip').checked = appSettings.autoSpeakFlip;
+  // Populate import folder select
+  populateFolderSelect('import-folder');
+}
+
+// ═══════════════════════════════════════════
+//  EXPORT / IMPORT PICKERS
+// ═══════════════════════════════════════════
+function openExportPicker(){ openModal('export-picker-modal'); }
+function openImportPicker(){ openModal('import-picker-modal'); }
+function openImportNDH(){ openModal('import-ndh-modal'); }
+function openImportExcel(){
+  populateFolderSelect('import-folder');
+  document.getElementById('import-preview').style.display='none';
+  document.getElementById('import-confirm-btn').style.display='none';
+  document.getElementById('excel-file').value='';
+  pendingImport=[];
+  openModal('import-excel-modal');
+}
+
+function openExportNDH(){ openExportSelect('ndh'); }
+function openExportExcel(){ openExportSelect('excel'); }
+
+let exportType='ndh'; // 'ndh' | 'excel'
+let exportPickedWords=new Set(); // word ids when scope=pick
+let exportPickedFolders=new Set(); // folder ids when scope=folder
+
+function openExportSelect(type){
+  exportType=type;
+  exportPickedWords=new Set();
+  exportPickedFolders=new Set();
+  document.getElementById('export-select-title').textContent=type==='ndh'?'📦 Xuất file .ndh':'📊 Xuất file Excel';
+  document.getElementById('export-ndh-opts').style.display=type==='ndh'?'block':'none';
+  document.getElementById('export-do-btn').textContent=type==='ndh'?'⬇ Xuất .ndh':'⬇ Xuất .xlsx';
+  renderExportFolderList();
+  updateExportSummary();
+  openModal('export-select-modal');
+}
+
+function onExportScopeChange(){}
+
+// Track which export tree nodes are expanded
+let exportTreeExpanded = new Set();
+
+function renderExportFolderList(){
+  const el=document.getElementById('export-folder-list');
+  let html='';
+
+  function buildNodeHtml(folderId, depth){
+    const f=folders.find(x=>x.id===folderId);
+    if(!f) return '';
+    const children=getChildFolders(folderId);
+    const folderWords=words.filter(w=>w.folder===folderId);
+    const hasChildren=children.length>0;
+    const hasWords=folderWords.length>0;
+    const canExpand=hasChildren||hasWords;
+    const cnt=getFolderWords(folderId,true).length;
+    const state=getFolderCheckState(folderId);
+    const checked=state==='checked';
+    const indet=state==='indeterminate';
+    const expanded=exportTreeExpanded.has(folderId);
+    const indent=depth*18;
+    const rowBg=checked||indet?'background:rgba(124,106,247,.08)':'';
+    let s=`<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;font-size:12px;font-weight:600;${rowBg}">
+      <span style="width:${indent}px;flex-shrink:0"></span>
+      <span style="width:16px;flex-shrink:0;text-align:center;cursor:pointer;font-size:13px;color:var(--text2);user-select:none" onclick="toggleExportTreeNode('${folderId}')">${canExpand?(expanded?'▾':'▸'):''}</span>
+      <input type="checkbox" ${checked?'checked':''} data-folderid="${folderId}" data-indet="${indet}" onchange="toggleExportFolder('${folderId}',this.checked)" style="accent-color:var(--accent);cursor:pointer;flex-shrink:0">
+      <span style="flex:1;cursor:pointer;color:${f.color||'var(--text)'}" onclick="toggleExportTreeNode('${folderId}')">${f.name}</span>
+      <span style="color:var(--text3);flex-shrink:0">${cnt} từ</span>
+    </div>`;
+    if(expanded){
+      children.forEach(c=>{s+=buildNodeHtml(c.id,depth+1);});
+      folderWords.forEach(w=>{
+        const wChecked=exportPickedWords.has(w.id);
+        const wIndent=(depth+1)*18;
+        s+=`<div style="display:flex;align-items:center;gap:8px;padding:4px 8px;border-radius:6px;font-size:11px;${wChecked?'background:rgba(124,106,247,.06)':''}">
+          <span style="width:${wIndent}px;flex-shrink:0"></span>
+          <span style="width:16px;flex-shrink:0"></span>
+          <input type="checkbox" ${wChecked?'checked':''} onchange="toggleExportWordInFolder(${w.id},this.checked)" style="accent-color:var(--accent);cursor:pointer;flex-shrink:0">
+          <span style="font-weight:700;color:var(--text);flex:1">${w.en}</span>
+          <span style="color:var(--text2)">${w.vi}</span>
+        </div>`;
+      });
+    }
+    return s;
+  }
+
+  // Render only root-level folders, children rendered recursively when expanded
+  getChildFolders(null).forEach(f=>{
+    html+=buildNodeHtml(f.id,0);
+  });
+
+  // Render words with no folder — directly at root level
+  const unfolderedWords=words.filter(w=>!w.folder);
+  unfolderedWords.forEach(w=>{
+    const wChecked=exportPickedWords.has(w.id);
+    html+=`<div style="display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:6px;font-size:12px;${wChecked?'background:rgba(124,106,247,.06)':''}">
+      <span style="width:16px;flex-shrink:0"></span>
+      <input type="checkbox" ${wChecked?'checked':''} onchange="toggleExportWordInFolder(${w.id},this.checked)" style="accent-color:var(--accent);cursor:pointer;flex-shrink:0">
+      <span style="font-weight:700;color:var(--text);flex:1">${w.en}</span>
+      <span style="color:var(--text2);font-size:11px">${w.vi}</span>
+    </div>`;
+  });
+
+  el.innerHTML=html;
+
+  // Apply indeterminate state after DOM render
+  el.querySelectorAll('input[data-indet="true"]').forEach(cb=>{cb.indeterminate=true;});
+}
+
+function toggleExportTreeNode(folderId){
+  if(exportTreeExpanded.has(folderId)) exportTreeExpanded.delete(folderId);
+  else exportTreeExpanded.add(folderId);
+  renderExportFolderList();
+}
+
+function exportFolderSelectAll(){
+  words.forEach(w=>exportPickedWords.add(w.id));
+  renderExportFolderList();
+  updateExportSummary();
+}
+function exportFolderClearAll(){
+  exportPickedWords.clear();
+  exportPickedFolders.clear();
+  renderExportFolderList();
+  updateExportSummary();
+}
+
+function toggleExportUnfoldered(checked){
+  words.filter(w=>!w.folder).forEach(w=>{
+    if(checked) exportPickedWords.add(w.id);
+    else exportPickedWords.delete(w.id);
+  });
+  renderExportFolderList();
+  updateExportSummary();
+}
+
+function toggleExportWordInFolder(id, checked){
+  if(checked) exportPickedWords.add(id);
+  else exportPickedWords.delete(id);
+  renderExportFolderList();
+  updateExportSummary();
+}
+
+function getFolderAncestors(folderId){
+  const ancestors=[];
+  let cur=folders.find(f=>f.id===folderId);
+  while(cur&&cur.parentId){
+    cur=folders.find(f=>f.id===cur.parentId);
+    if(cur) ancestors.push(cur.id);
+  }
+  return ancestors;
+}
+
+// Tính trạng thái checkbox của thư mục dựa hoàn toàn vào exportPickedWords
+function getFolderCheckState(folderId){
+  const allWords=getFolderWords(folderId, true); // đệ quy
+  if(!allWords.length) return 'unchecked';
+  const checkedCount=allWords.filter(w=>exportPickedWords.has(w.id)).length;
+  if(checkedCount===0) return 'unchecked';
+  if(checkedCount===allWords.length) return 'checked';
+  return 'indeterminate';
+}
+
+function isFolderIndeterminate(folderId){
+  return getFolderCheckState(folderId)==='indeterminate';
+}
+
+function toggleExportFolder(id, checked){
+  // Lấy tất cả từ trong thư mục này (đệ quy)
+  const allWords=getFolderWords(id, true);
+  if(checked){
+    allWords.forEach(w=>exportPickedWords.add(w.id));
+  } else {
+    allWords.forEach(w=>exportPickedWords.delete(w.id));
+  }
+  renderExportFolderList();
+  updateExportSummary();
+}
+
+function renderExportWordList(q=''){
+  const el=document.getElementById('export-word-list');
+  const ql=(q||'').toLowerCase();
+  const filtered=ql?words.filter(w=>w.en.toLowerCase().includes(ql)||w.vi.toLowerCase().includes(ql)):words;
+  el.innerHTML=filtered.map(w=>{
+    const checked=exportPickedWords.has(w.id);
+    const fName=w.folder?(folders.find(f=>f.id===w.folder)||{}).name||'':'';
+    return `<label style="display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:6px;cursor:pointer;${checked?'background:rgba(124,106,247,.08)':''}">
+      <input type="checkbox" ${checked?'checked':''} onchange="toggleExportWord(${w.id},this.checked)" style="accent-color:var(--accent);flex-shrink:0">
+      <span style="font-weight:700;font-size:12px">${w.en}</span>
+      <span style="font-size:11px;color:var(--text2)">${w.vi}</span>
+      ${fName?`<span style="font-size:10px;color:var(--text3);margin-left:auto">📁${fName}</span>`:''}
+    </label>`;
+  }).join('');
+  updateExportSummary();
+}
+
+function toggleExportWord(id, checked){
+  if(checked) exportPickedWords.add(id);
+  else exportPickedWords.delete(id);
+  document.getElementById('export-word-count').textContent=`${exportPickedWords.size} từ đã chọn`;
+  updateExportSummary();
+}
+
+function exportPickAllWords(){ exportPickedWords=new Set(words.map(w=>w.id)); renderExportWordList(document.querySelector('#export-word-picker input[type=text]').value); }
+function exportClearWords(){ exportPickedWords=new Set(); renderExportWordList(document.querySelector('#export-word-picker input[type=text]').value); }
+
+function getExportWords(){
+  return words.filter(w=>exportPickedWords.has(w.id));
+}
+
+function updateExportSummary(){
+  const count=getExportWords().length;
+  document.getElementById('export-summary').textContent=count>0?`Sẽ xuất ${count} từ vựng.`:'⚠️ Chưa chọn từ nào.';
+}
+
+function doExport(){
+  const wordsToExport=getExportWords();
+  if(!wordsToExport.length){ toast('⚠️ Chưa chọn từ nào để xuất!'); return; }
+  closeModal('export-select-modal');
+  if(exportType==='ndh') exportNDH(wordsToExport);
+  else exportExcel(wordsToExport);
+}
+
+function exportExcel(wordsToExport){
+  wordsToExport=wordsToExport||words;
+  if(!wordsToExport.length){ toast('⚠️ Chưa có từ vựng nào!'); return; }
+  const header=['Tiếng Anh','Tiếng Việt','Phiên âm','Loại từ','Ví dụ','Thư mục'];
+  const rows=wordsToExport.map(w=>[
+    w.en, w.vi, w.ph||'', w.type||'', w.ex||'',
+    w.folder ? getFolderFullPath(w.folder) : ''
+  ]);
+  const ws=XLSX.utils.aoa_to_sheet([header,...rows]);
+  ws['!cols']=[{wch:20},{wch:24},{wch:16},{wch:10},{wch:40},{wch:30}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Từ vựng');
+  const date=new Date();
+  const fname=`flashlearn_${date.getFullYear()}${String(date.getMonth()+1).padStart(2,'0')}${String(date.getDate()).padStart(2,'0')}.xlsx`;
+  XLSX.writeFile(wb,fname);
+  toast(`✅ Đã xuất ${wordsToExport.length} từ vựng ra Excel!`);
+}
+
+// ═══════════════════════════════════════════
+//  EXPORT / IMPORT .NDH
+// ═══════════════════════════════════════════
+function exportNDH(wordsToExport){
+  wordsToExport=wordsToExport||words;
+  const includeProgress = document.getElementById('export-include-progress')?.checked||false;
+  // Only export folders referenced by selected words
+  const usedFolderIds=new Set(wordsToExport.map(w=>w.folder).filter(Boolean));
+  // Include parent folders recursively
+  function addParents(fid){
+    const f=folders.find(x=>x.id===fid);
+    if(!f) return;
+    usedFolderIds.add(f.id);
+    if(f.parentId) addParents(f.parentId);
+  }
+  [...usedFolderIds].forEach(addParents);
+  const data = {
+    version: 1,
+    app: 'NoName',
+    exportedAt: Date.now(),
+    includesProgress: includeProgress,
+    words: wordsToExport.map(w => {
+      const entry = { en:w.en, vi:w.vi, ph:w.ph||'', type:w.type||'', ex:w.ex||'', folder:w.folder||null };
+      if(includeProgress){ entry.sm=w.sm; entry.learnedAt=w.learnedAt||null; entry.starred=w.starred||false; }
+      return entry;
+    }),
+    folders: folders.filter(f=>usedFolderIds.has(f.id)).map(f=>({
+      id:f.id, name:f.name, color:f.color||'#7c6af7', parentId:f.parentId||null
+    }))
+  };
+  const json=JSON.stringify(data,null,2);
+  const blob=new Blob([json],{type:'application/octet-stream'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  const date=new Date();
+  a.download=`flashlearn_${date.getFullYear()}${String(date.getMonth()+1).padStart(2,'0')}${String(date.getDate()).padStart(2,'0')}.ndh`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast(`✅ Đã xuất ${wordsToExport.length} từ vựng!`);
+}
+
+function handleNDHFile(file){
+  if(!file) return;
+  if(!file.name.endsWith('.ndh')){
+    toast('⚠️ Chỉ hỗ trợ file .ndh!');
+    return;
+  }
+  // Reset any leftover dup state from previous import
+  dupQueue=[]; dupFreshIds=[]; dupResolved=0;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const data = JSON.parse(e.target.result);
+      if(!data.app || data.app !== 'NoName' || !Array.isArray(data.words)){
+        toast('⚠️ File .ndh không hợp lệ!');
+        return;
+      }
+      // Reload folders from localStorage first
+      folders = JSON.parse(localStorage.getItem(STORE_FOLDERS) || 'null') || [];
+
+      // Import folders - sort so parents come before children
+      let folderCount = 0;
+      if(Array.isArray(data.folders)){
+        // Topological sort: parents before children
+        const toImport = data.folders.filter(f => !folders.find(x => x.id === f.id));
+        const sorted = [];
+        const seen = new Set(folders.map(f=>f.id));
+        let remaining = [...toImport];
+        let maxPasses = remaining.length + 1;
+        while(remaining.length && maxPasses-- > 0){
+          const next = [];
+          remaining.forEach(f => {
+            if(!f.parentId || seen.has(f.parentId)){
+              sorted.push(f);
+              seen.add(f.id);
+            } else {
+              next.push(f);
+            }
+          });
+          remaining = next;
+        }
+        // Add any remaining (orphaned) folders anyway
+        remaining.forEach(f => sorted.push(f));
+        sorted.forEach(f => {
+          folders.push({id: f.id, name: f.name, color: f.color||'#7c6af7', parentId: f.parentId||null});
+          folderCount++;
+        });
+        // Save folders to localStorage immediately
+        localStorage.setItem(STORE_FOLDERS, JSON.stringify(folders));
+      }
+
+      // Reload words from localStorage to ensure we compare against latest saved state
+      words = JSON.parse(localStorage.getItem(STORE_WORDS) || 'null') || [];
+      nextId = words.length ? Math.max(...words.map(w=>w.id))+1 : 1;
+      // Separate duplicates from new words
+      const dupes=[];
+      const fresh=[];
+      data.words.forEach(w => {
+        const existing=words.find(x => x.en.toLowerCase() === w.en.toLowerCase());
+        if(existing){
+          dupes.push({incoming:w, existing, smData: data.includesProgress && w.sm ? w.sm : null, learnedAt: data.includesProgress ? (w.learnedAt||null) : null, includesProgress: data.includesProgress});
+        } else {
+          fresh.push(w);
+        }
+      });
+      // Add non-duplicate words, track their IDs for possible rollback
+      const freshIds=[];
+      fresh.forEach(w => {
+        const newId=nextId++;
+        freshIds.push(newId);
+        words.push({
+          id: newId,
+          en: w.en, vi: w.vi, ph: w.ph||'', type: w.type||'', ex: w.ex||'',
+          folder: w.folder || null,
+          starred: w.starred || false,
+          sm: data.includesProgress && w.sm ? w.sm : {ef:2.5, interval:0, reps:0, nextReview: Date.now(), level:0},
+          learnedAt: data.includesProgress ? (w.learnedAt||null) : null,
+        });
+      });
+      // Reset file input
+      document.getElementById('ndh-file-input').value='';
+      if(dupes.length){
+        startDupResolve(dupes, fresh.length, 'ndh', freshIds);
+      } else {
+        save();renderExplorer();renderOverview();
+        toast(`✅ Nhập ${fresh.length} từ${folderCount?' + '+folderCount+' thư mục':''}!`);
+      }
+    } catch(err){
+      toast('⚠️ Lỗi đọc file: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ═══════════════════════════════════════════
+//  DUPLICATE RESOLUTION
+// ═══════════════════════════════════════════
+let dupQueue=[];       // remaining duplicates to resolve
+let dupResolved=0;     // count resolved
+let dupImportType='';  // 'excel' | 'ndh'
+let dupFreshCount=0;   // how many non-dup words were already added
+let dupFreshIds=[];    // ids of fresh words added (for rollback on cancel)
+
+function startDupResolve(dupes, freshCount, importType, freshIds){
+  dupQueue=[...dupes];
+  dupResolved=0;
+  dupImportType=importType;
+  dupFreshCount=freshCount;
+  dupFreshIds=freshIds||[];
+  renderDupModal();
+  openModal('dup-modal');
+}
+
+function cancelDupResolve(){
+  // Rollback: remove fresh words that were already added
+  if(dupFreshIds && dupFreshIds.length){
+    words=words.filter(w=>!dupFreshIds.includes(w.id));
+  }
+  dupQueue=[];
+  dupFreshIds=[];
+  closeModal('dup-modal');
+  if(dupImportType==='excel'){
+    pendingImport=[];
+    const prev=document.getElementById('import-preview');
+    if(prev) prev.style.display='none';
+    const btn=document.getElementById('import-confirm-btn');
+    if(btn) btn.style.display='none';
+    const fi=document.getElementById('excel-file');
+    if(fi) fi.value='';
+    closeModal('import-excel-modal');
+  }
+  if(dupImportType==='ndh'){
+    closeModal('import-ndh-modal');
+  }
+  save(); renderExplorer(); renderOverview();
+  toast('🚫 Đã hủy import.');
+}
+
+function getFolderName(folderId){
+  if(!folderId) return 'Không có thư mục';
+  const f=folders.find(x=>x.id===folderId);
+  return f ? getFolderFullPath(f.id) : 'Không có thư mục';
+}
+
+function renderDupModal(){
+  if(!dupQueue.length){
+    closeModal('dup-modal');
+    save();renderExplorer();renderOverview();
+    const total=dupFreshCount+dupResolved;
+    toast(`✅ Đã xử lý xong! Tổng ${total} từ được nhập.`);
+    // Reset excel form if needed
+    if(dupImportType==='excel'){
+      pendingImport=[];
+      const prev=document.getElementById('import-preview');
+      if(prev) prev.style.display='none';
+      const btn=document.getElementById('import-confirm-btn');
+      if(btn) btn.style.display='none';
+      const fi=document.getElementById('excel-file');
+      if(fi) fi.value='';
+      closeModal('import-excel-modal');
+    }
+    if(dupImportType==='ndh'){
+      closeModal('import-ndh-modal');
+    }
+    return;
+  }
+  const item=dupQueue[0];
+  const oldW=item.existing;
+  const newW=item.incoming;
+  const oldFolder=getFolderName(oldW.folder);
+  const remaining=dupQueue.length;
+
+  const body=`
+    <div style="font-size:12px;color:var(--text2);margin-bottom:14px;font-weight:600">
+      Từ trùng <span style="color:var(--accent)">${remaining}</span> / tổng số từ trùng gặp phải
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+      <div style="background:var(--surf2);border:2px solid var(--border);border-radius:var(--r);padding:16px">
+        <div style="font-size:10px;font-weight:800;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">📁 Từ cũ — ${oldFolder}</div>
+        <div style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:4px">${oldW.en}</div>
+        ${oldW.ph?`<div style="font-size:11px;color:var(--accent);font-family:'Space Mono',monospace;margin-bottom:4px">${oldW.ph}</div>`:''}
+        <div style="font-size:13px;color:var(--text2);margin-bottom:4px">${oldW.vi}</div>
+        ${oldW.type?`<div style="font-size:11px;color:var(--text3)">${oldW.type}</div>`:''}
+        ${oldW.ex?`<div style="font-size:11px;color:var(--text3);font-style:italic;margin-top:6px;border-top:1px solid var(--border);padding-top:6px">${oldW.ex}</div>`:''}
+        <button class="btn btn-ghost btn-sm" style="margin-top:12px;width:100%" onclick="resolveDup('old')">Giữ từ cũ</button>
+      </div>
+      <div style="background:rgba(124,106,247,.06);border:2px solid rgba(124,106,247,.3);border-radius:var(--r);padding:16px">
+        <div style="font-size:10px;font-weight:800;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">✨ Từ mới (từ file)</div>
+        <div style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:4px">${newW.en}</div>
+        ${newW.ph?`<div style="font-size:11px;color:var(--accent);font-family:'Space Mono',monospace;margin-bottom:4px">${newW.ph}</div>`:''}
+        <div style="font-size:13px;color:var(--text2);margin-bottom:4px">${newW.vi}</div>
+        ${newW.type?`<div style="font-size:11px;color:var(--text3)">${newW.type}</div>`:''}
+        ${newW.ex?`<div style="font-size:11px;color:var(--text3);font-style:italic;margin-top:6px;border-top:1px solid var(--border);padding-top:6px">${newW.ex}</div>`:''}
+        <button class="btn btn-primary btn-sm" style="margin-top:12px;width:100%" onclick="resolveDup('new')">Dùng từ mới</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('dup-modal-body').innerHTML=body;
+  // Show apply-all bar only if there's more than 1 duplicate
+  const bar=document.getElementById('dup-apply-all-bar');
+  if(remaining>1){bar.style.display='flex';}
+  else{bar.style.display='none';}
+}
+
+function resolveDup(choice){
+  if(!dupQueue.length) return;
+  const item=dupQueue.shift();
+  if(choice==='new'){
+    // Replace old word's content with new word's content (keep id, sm, learnedAt if ndh without progress)
+    const oldW=item.existing;
+    const newW=item.incoming;
+    oldW.en=newW.en;
+    oldW.vi=newW.vi;
+    oldW.ph=newW.ph||'';
+    oldW.type=newW.type||oldW.type;
+    oldW.ex=newW.ex||'';
+    // Update folder if importing from Excel and folder info provided
+    if(dupImportType==='excel' && item.folder!==undefined) oldW.folder=item.folder;
+    // For ndh: update sm and learnedAt if included
+    if(dupImportType==='ndh' && item.smData){ oldW.sm=item.smData; oldW.learnedAt=item.learnedAt; }
+  }
+  // 'old' = do nothing, keep old word as-is
+  dupResolved++;
+  renderDupModal();
+}
+
+function applyAllDup(choice){
+  if(!dupQueue.length) return;
+  [...dupQueue].forEach(item=>{
+    if(choice==='new'){
+      const oldW=item.existing;
+      const newW=item.incoming;
+      oldW.en=newW.en; oldW.vi=newW.vi; oldW.ph=newW.ph||'';
+      oldW.type=newW.type||oldW.type; oldW.ex=newW.ex||'';
+      if(dupImportType==='excel' && item.folder!==undefined) oldW.folder=item.folder;
+      if(dupImportType==='ndh' && item.smData){ oldW.sm=item.smData; oldW.learnedAt=item.learnedAt; }
+    }
+    dupResolved++;
+  });
+  dupQueue=[];
+  renderDupModal(); // will close and save
+}
+
+function saveAppAsHTML(){
+  // Embed current words and folders data into the HTML
+  const dataScript = `<script id="__embedded_data__">
+(function(){
+  var d = ${JSON.stringify({words, folders, nextId})};
+  try {
+    localStorage.setItem('${STORE_WORDS}', JSON.stringify(d.words));
+    localStorage.setItem('${STORE_FOLDERS}', JSON.stringify(d.folders));
+  } catch(e){}
+})();
+<\/script>`;
+
+  let html = document.documentElement.outerHTML;
+  // Remove previous embedded data if exists
+  html = html.replace(/<script id="__embedded_data__">[\s\S]*?<\/script>/,'');
+  // Inject before </head>
+  html = html.replace('</head>', dataScript + '</head>');
+
+  const blob = new Blob([html], {type:'text/html'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'noname.html';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('💾 Đã lưu file HTML kèm dữ liệu!');
+}
+
+function resetAllData(){
+  if(!confirm('⚠️ Xóa toàn bộ từ vựng, thư mục và tiến độ học?\n\nHành động này KHÔNG THỂ HOÀN TÁC!')) return;
+  if(!confirm('Bạn có chắc chắn? Tất cả dữ liệu sẽ bị xóa vĩnh viễn.')) return;
+  words=[];
+  folders=[];
+  nextId=1;
+  localStorage.removeItem(STORE_WORDS);
+  localStorage.removeItem(STORE_FOLDERS);
+  save();
+  renderExplorer();
+  renderOverview();
+  toast('🗑 Đã xóa toàn bộ dữ liệu!');
+}
+
+// Auto-speak helper: called when a new word is shown
+function autoSpeak(text){ if(appSettings.autoSpeak && text) speak(text); }
+function autoSpeakFlip(text){ if(appSettings.autoSpeakFlip && text) speak(text); }
+
+loadSettings();
+
+renderOverview();
+setTimeout(loadVoices,300);
+
+// PWA Service Worker Registration
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(r => console.log('SW registered:', r.scope))
+      .catch(e => console.log('SW error:', e));
+  });
+}
+</script>
+</body>
+</html>
