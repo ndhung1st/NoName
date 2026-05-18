@@ -1464,7 +1464,6 @@ function openMoveFolder(folderId){
 }
 
 function openMoveMultipleItems(wIds, fIds){
-  // Excluded: folders being moved and their descendants (can't move into themselves)
   const excluded=new Set();
   fIds.forEach(fid=>{excluded.add(fid);getAllDescendantIds(fid).forEach(id=>excluded.add(id));});
   const desc=[];
@@ -1472,26 +1471,55 @@ function openMoveMultipleItems(wIds, fIds){
   if(wIds.length) desc.push(`${wIds.length} từ vựng`);
   document.getElementById('move-modal-desc').textContent=`Chuyển ${desc.join(' và ')} vào:`;
   const list=document.getElementById('move-folder-list');
-  const wIdsJson=JSON.stringify(wIds);
-  const fIdsJson=JSON.stringify(fIds);
-  list.innerHTML=`
-    <div style="padding:10px;border-radius:var(--rs);cursor:pointer;border:1px solid var(--border);font-size:13px;font-weight:600" onclick="executeMove(${wIdsJson},${fIdsJson},null)">📚 Gốc (không có cha)</div>
-    ${folders.filter(f=>!excluded.has(f.id)).map(f=>`
-      <div style="padding:10px;border-radius:var(--rs);cursor:pointer;border:1px solid ${f.color||'var(--border)'};font-size:13px;font-weight:600;color:${f.color||'var(--text)'}" onclick="executeMove(${wIdsJson},${fIdsJson},'${f.id}')">
-        📁 ${getFolderFullPath(f.id)}
-      </div>`).join('')}
-  `;
+
+  // Lưu tham số vào biến global để tránh lỗi JSON trong onclick HTML
+  window._moveWIds = wIds;
+  window._moveFIds = fIds;
+
+  const makeRow = (label, targetId, color, border) => {
+    const div = document.createElement('div');
+    div.style.cssText = `padding:10px;border-radius:var(--rs);cursor:pointer;border:1px solid ${border||'var(--border)'};font-size:13px;font-weight:600;color:${color||'var(--text)'}`;
+    div.textContent = label;
+    div.onclick = () => executeMove(window._moveWIds, window._moveFIds, targetId);
+    return div;
+  };
+
+  list.innerHTML = '';
+  list.appendChild(makeRow('📚 Gốc (không có cha)', null, null, null));
+  folders.filter(f=>!excluded.has(f.id)).forEach(f=>{
+    list.appendChild(makeRow('📁 ' + getFolderFullPath(f.id), f.id, f.color||null, f.color||null));
+  });
+
   openModal('move-modal');
 }
 
 function openMoveMultiple(wIds){ openMoveMultipleItems(wIds,[]); }
 
 function executeMove(wIds, fIds, targetId){
-  // Move words
-  wIds.forEach(id=>{const w=words.find(x=>x.id===id);if(w)w.folder=targetId;});
+  // Build set of all folder ids being moved (including descendants) so we
+  // don't redundantly re-parent words that already live inside a moved folder.
+  const movedFolderAll=new Set();
+  fIds.forEach(fid=>{movedFolderAll.add(fid);getAllDescendantIds(fid).forEach(id=>movedFolderAll.add(id));});
+  // Move only words that are NOT already inside one of the moved folders
+  wIds.forEach(id=>{
+    const w=words.find(x=>x.id===id);
+    if(w && !movedFolderAll.has(w.folder)) w.folder=targetId;
+  });
   // Move folders (change parentId)
   fIds.forEach(fid=>{const f=folders.find(x=>x.id===fid);if(f)f.parentId=targetId||null;});
-  save();invalidateDescCache();selectedItems.clear();renderExplorer();closeModal('move-modal');
+  save();invalidateDescCache();selectedItems.clear();
+
+  // Fix explorerPath: if we moved a folder that is currently in the path,
+  // or if the current view no longer makes sense, rebuild the path correctly.
+  // Strategy: rebuild explorerPath so it only contains folders that still
+  // form a valid ancestor chain, then append targetId if we moved into a folder.
+  const movedFolderSet = new Set(fIds);
+  // Remove any path segment that was just moved away (it's no longer a child of its previous parent)
+  // Keep path segments that are NOT in the moved set
+  explorerPath = explorerPath.filter(pid => !movedFolderSet.has(pid));
+
+  closeModal('move-modal');
+  renderExplorer();
   const parts=[];
   if(fIds.length) parts.push(`${fIds.length} thư mục`);
   if(wIds.length) parts.push(`${wIds.length} từ`);
