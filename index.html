@@ -14,7 +14,6 @@
 <link rel="icon" type="image/png" href="favicon.png">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://code.responsivevoice.org/responsivevoice.js?key=FREE"></script>
 <style>
 :root{
   --bg:#f8f8fc;--surf:#ffffff;--surf2:#f0f0f8;--surf3:#e4e4f0;--surf4:#d8d8ec;
@@ -420,13 +419,8 @@ header{display:flex;align-items:center;justify-content:space-between;padding:20p
       </label>
     </div>
 
-    <!-- Voice select -->
-    <div style="padding:14px 0;border-bottom:1px solid var(--border)">
-      <div style="font-size:13px;font-weight:700;margin-bottom:8px">Giọng đọc</div>
-      <select id="setting-voice-sel" onchange="saveSettings();setVoiceFromSettings()" style="background:var(--surf2);border:1px solid var(--border);border-radius:var(--rs);padding:8px 12px;color:var(--text);font-size:13px;font-family:'Sora',sans-serif;outline:none;width:100%;max-width:400px">
-        <option value="-1">🔊 Giọng mặc định hệ thống</option>
-      </select>
-    </div>
+    <!-- Voice select hidden -->
+    <select id="setting-voice-sel" style="display:none"><option value="-1">default</option></select>
 
     <!-- Speed -->
     <div style="padding:14px 0">
@@ -870,19 +864,16 @@ function setVoice(){ const i=document.getElementById('voice-sel').value; selVoic
 function setRate(){ selRate=parseFloat(document.getElementById('rate-sel').value); }
 function speak(text){
   if(!text) return;
-  // Dùng ResponsiveVoice - giọng chuẩn, hoạt động tốt trên mọi thiết bị
-  if(typeof responsiveVoice!=='undefined' && responsiveVoice.voiceSupport()){
-    responsiveVoice.cancel();
-    responsiveVoice.speak(text, 'US English Female', {rate: selRate});
-  } else {
-    // Fallback Web Speech API
-    speechSynthesis.cancel();
+  speechSynthesis.cancel();
+  setTimeout(()=>{
     const u = new SpeechSynthesisUtterance(text);
     u.lang = 'en-US';
     u.rate = selRate;
-    if(appSettings.voiceIndex>=0 && selVoice) u.voice = selVoice;
-    setTimeout(()=>speechSynthesis.speak(u), 50);
-  }
+    u.pitch = 1;
+    u.volume = 1;
+    // KHÔNG set u.voice - để hệ thống tự chọn giọng en-US tốt nhất
+    speechSynthesis.speak(u);
+  }, 100);
 }
 
 // ═══════════════════════════════════════════
