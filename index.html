@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NoName</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
@@ -1753,7 +1754,7 @@ function runFSLearnStep(){
   const step=FS_LEARN_STEPS[fsLearnStep];
   if(step==='flashcard') renderFC(wrap,fsLearnPool,onFSLearnStepDone,false,false);
   else if(step==='match') renderMatch(wrap,fsLearnPool,onFSLearnStepDone);
-  else if(step==='quiz') renderQuiz(wrap,fsLearnPool,onFSLearnStepDone,getFolderWords(fsLearnFolderId,true));
+  else if(step==='quiz') renderQuiz(wrap,fsLearnPool,onFSLearnStepDone,fsLearnPool);
   else if(step==='write') renderWriteReview(wrap,fsLearnPool,onFSLearnStepDone,fsLearnScores);
 }
 
@@ -1845,8 +1846,7 @@ window.launchFolderReview=function(folderId){
     </div>`;
   }
 
-  const reviewDistractor=getFolderWords(folderId,true).filter(w=>w.sm.reps>0);
-  renderQuiz(game,chosen,finalize,reviewDistractor.length>=4?reviewDistractor:getFolderWords(folderId,true));
+  renderQuiz(game,chosen,finalize,chosen);
 };
 
 // ═══════════════════════════════════════════
@@ -1994,7 +1994,7 @@ function startReview(){
   let pool=dueWords();
   if(!pool.length) pool=[...words];
   if(!pool.length){toast('⚠️ Chưa có từ vựng nào!');return;}
-  pool=shuffle(pool).slice(0,20);
+  pool=shuffle(pool).slice(0, appSettings.sessionSize||5);
   document.getElementById('review-start').style.display='none';
   document.getElementById('review-game').style.display='block';
   const game=document.getElementById('review-game');
@@ -2041,7 +2041,7 @@ function runReviewGame(mode, pool, game){
   }
 
   if(mode==='match') renderMatch(game,pool,onGameDone);
-  else if(mode==='quiz') renderQuiz(game,pool,onGameDone,words.filter(w=>w.sm.reps>0));
+  else if(mode==='quiz') renderQuiz(game,pool,onGameDone,pool);
   else if(mode==='write') renderWriteReview(game,pool,onGameDone,scoreMap);
 }
 
@@ -2250,7 +2250,7 @@ function renderQuiz(container, pool, onDone, distractorPool=null){
   function render(){
     answered=false; wrongThisQ=false;
     const q=qs[idx];
-    const dPool=(distractorPool||words).filter(w=>w.id!==q.id);
+    const dPool=(distractorPool||pool).filter(w=>w.id!==q.id);
     const others=shuffle(dPool).slice(0,3);
     const opts=shuffle([q,...others]);
     container.innerHTML=`
