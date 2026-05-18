@@ -869,14 +869,20 @@ function setVoice(){ const i=document.getElementById('voice-sel').value; selVoic
 function setRate(){ selRate=parseFloat(document.getElementById('rate-sel').value); }
 function speak(text){
   if(!text) return;
-  speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(text);
-  u.lang='en-US';
-  u.rate=selRate;
-  // Chỉ set voice nếu không phải "mặc định hệ thống"
-  if(appSettings.voiceIndex>=0 && selVoice) u.voice=selVoice;
-  // Android Chrome fix
-  setTimeout(()=>speechSynthesis.speak(u), 50);
+  // Dùng Google Translate TTS - giọng chuẩn, hoạt động tốt trên mobile
+  const encoded = encodeURIComponent(text);
+  const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encoded}&tl=en&client=tw-ob`;
+  const audio = new Audio(url);
+  audio.playbackRate = selRate;
+  audio.play().catch(()=>{
+    // Fallback về Web Speech API nếu Google TTS bị block
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'en-US';
+    u.rate = selRate;
+    if(appSettings.voiceIndex>=0 && selVoice) u.voice = selVoice;
+    setTimeout(()=>speechSynthesis.speak(u), 50);
+  });
 }
 
 // ═══════════════════════════════════════════
