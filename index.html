@@ -4,14 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NoName</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#7c6af7">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="NoName">
-<link rel="apple-touch-icon" href="icon-192.png">
-<link rel="icon" type="image/png" href="favicon.png">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
@@ -419,8 +411,13 @@ header{display:flex;align-items:center;justify-content:space-between;padding:20p
       </label>
     </div>
 
-    <!-- Voice select hidden -->
-    <select id="setting-voice-sel" style="display:none"><option value="-1">default</option></select>
+    <!-- Voice select -->
+    <div style="padding:14px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px">Giọng đọc</div>
+      <select id="setting-voice-sel" onchange="saveSettings();setVoiceFromSettings()" style="background:var(--surf2);border:1px solid var(--border);border-radius:var(--rs);padding:8px 12px;color:var(--text);font-size:13px;font-family:'Sora',sans-serif;outline:none;width:100%;max-width:400px">
+        <option>Đang tải giọng...</option>
+      </select>
+    </div>
 
     <!-- Speed -->
     <div style="padding:14px 0">
@@ -790,25 +787,6 @@ function loadVoices(){
   const all=speechSynthesis.getVoices();
   voices=all.filter(v=>v.lang.startsWith('en'));
   if(!voices.length) voices=all;
-
-  // Ưu tiên giọng tiếng Anh chuẩn trên mobile Android/iOS
-  const preferred=[
-    'Google US English','Google UK English Female','Google UK English Male',
-    'en-US-Neural2','Microsoft David','Microsoft Zira',
-    'Karen','Daniel','Samantha','Aaron','Fred'
-  ];
-  voices.sort((a,b)=>{
-    const ai=preferred.findIndex(p=>a.name.includes(p));
-    const bi=preferred.findIndex(p=>b.name.includes(p));
-    if(ai>=0&&bi<0) return -1;
-    if(bi>=0&&ai<0) return 1;
-    if(ai>=0&&bi>=0) return ai-bi;
-    const aUS=a.lang==='en-US'?0:1;
-    const bUS=b.lang==='en-US'?0:1;
-    if(aUS!==bUS) return aUS-bUS;
-    return (a.localService?0:1)-(b.localService?0:1);
-  });
-
   const sel=document.getElementById('voice-sel');
   if(sel){
     if(voices.length){
@@ -822,69 +800,28 @@ function loadVoices(){
   }
   // Also sync settings selector if open
   const ssel=document.getElementById('setting-voice-sel');
-  if(ssel){
-    const defaultOpt='<option value="-1">🔊 Giọng mặc định hệ thống</option>';
-    if(voices.length){
-      ssel.innerHTML=defaultOpt+voices.map((v,i)=>`<option value="${i}">${v.name} (${v.lang})</option>`).join('');
-      ssel.value=appSettings.voiceIndex;
-    } else {
-      ssel.innerHTML=defaultOpt;
-    }
+  if(ssel && voices.length){
+    ssel.innerHTML=voices.map((v,i)=>`<option value="${i}">${v.name} (${v.lang})</option>`).join('');
+    ssel.value=appSettings.voiceIndex;
   }
 }
-// Load voices - xử lý đặc biệt cho Android Chrome
+// Thử nhiều lần để đảm bảo voices được load trên mobile
 if(typeof speechSynthesis!=='undefined'){
-  // Android: voices chỉ có sau khi onvoiceschanged fire
-  speechSynthesis.onvoiceschanged=()=>{
-    loadVoices();
-    // Cập nhật select "Đang tải giọng..." nếu đang hiển thị
-    const ssel=document.getElementById('setting-voice-sel');
-    if(ssel && voices.length && ssel.options[0] && ssel.options[0].text.includes('tải')){
-      loadVoices();
-    }
-  };
-  // Thử ngay và retry nhiều lần cho các trình duyệt khác nhau
+  speechSynthesis.onvoiceschanged=loadVoices;
   loadVoices();
-  [200,500,1000,2000,4000].forEach(t=>setTimeout(()=>{
-    if(!voices.length) loadVoices();
-    // Nếu vẫn không có giọng sau 4s, hiện thông báo thay vì "đang tải"
-    if(t===4000){
-      const ssel=document.getElementById('setting-voice-sel');
-      if(ssel && (!voices.length || (ssel.options[0] && ssel.options[0].text.includes('tải')))){
-        if(!voices.length){
-          ssel.innerHTML='<option>Không tìm thấy giọng đọc</option>';
-        } else {
-          loadVoices();
-        }
-      }
-    }
-  },t));
+  setTimeout(loadVoices,200);
+  setTimeout(loadVoices,1000);
+  setTimeout(loadVoices,3000);
 }
 function setVoice(){ const i=document.getElementById('voice-sel').value; selVoice=voices[i]||null; }
 function setRate(){ selRate=parseFloat(document.getElementById('rate-sel').value); }
 function speak(text){
   if(!text) return;
-  // Thử Cambridge Dictionary MP3 trước (giọng chuẩn British/American)
-  const word = text.trim().toLowerCase().split(' ')[0]; // lấy từ đầu tiên
-  const cambridgeUrl = `https://dictionary.cambridge.org/media/english/us_pron/${word[0]}/${word.slice(0,3)}/${word}.mp3`;
-  const audio = new Audio(cambridgeUrl);
-  audio.playbackRate = selRate;
-  audio.play().catch(()=>{
-    // Fallback: thử Oxford
-    const oxfordUrl = `https://www.oxfordlearnersdictionaries.com/media/english/us_pron/${word[0]}/${word.slice(0,3)}/${word}__us_1.mp3`;
-    const audio2 = new Audio(oxfordUrl);
-    audio2.playbackRate = selRate;
-    audio2.play().catch(()=>{
-      // Fallback cuối: Web Speech API
-      speechSynthesis.cancel();
-      setTimeout(()=>{
-        const u = new SpeechSynthesisUtterance(text);
-        u.lang = 'en-US';
-        u.rate = selRate;
-        speechSynthesis.speak(u);
-      }, 100);
-    });
-  });
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);
+  if(selVoice) u.voice=selVoice;
+  u.rate=selRate; u.lang='en-US';
+  speechSynthesis.speak(u);
 }
 
 // ═══════════════════════════════════════════
@@ -2599,12 +2536,12 @@ function saveSettings(){
 }
 
 function setVoiceFromSettings(){
-  const i = parseInt(document.getElementById('setting-voice-sel').value);
-  appSettings.voiceIndex = isNaN(i)?-1:i;
-  selVoice = (appSettings.voiceIndex>=0)?voices[appSettings.voiceIndex]||null:null;
+  const i = parseInt(document.getElementById('setting-voice-sel').value)||0;
+  selVoice = voices[i]||null;
+  appSettings.voiceIndex = i;
   // sync voice-sel in words tab
   const vsel = document.getElementById('voice-sel');
-  if(vsel) vsel.value = appSettings.voiceIndex;
+  if(vsel) vsel.value = i;
   saveSettings();
 }
 
@@ -3207,15 +3144,6 @@ loadSettings();
 
 renderOverview();
 setTimeout(loadVoices,300);
-
-// PWA Service Worker Registration
-if('serviceWorker' in navigator){
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js')
-      .then(r => console.log('SW registered:', r.scope))
-      .catch(e => console.log('SW error:', e));
-  });
-}
 </script>
 </body>
 </html>
