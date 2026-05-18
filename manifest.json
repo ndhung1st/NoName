@@ -1,6 +1,6 @@
 {
-  "name": "FlashLearn - Học từ vựng",
-  "short_name": "FlashLearn",
+  "name": "NoName",
+  "short_name": "NoName",
   "description": "App học từ vựng tiếng Anh với Spaced Repetition",
   "start_url": "./index.html",
   "display": "standalone",
