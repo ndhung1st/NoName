@@ -14,6 +14,7 @@
 <link rel="icon" type="image/png" href="favicon.png">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://code.responsivevoice.org/responsivevoice.js?key=FREE"></script>
 <style>
 :root{
   --bg:#f8f8fc;--surf:#ffffff;--surf2:#f0f0f8;--surf3:#e4e4f0;--surf4:#d8d8ec;
@@ -869,20 +870,19 @@ function setVoice(){ const i=document.getElementById('voice-sel').value; selVoic
 function setRate(){ selRate=parseFloat(document.getElementById('rate-sel').value); }
 function speak(text){
   if(!text) return;
-  // Dùng Google Translate TTS - giọng chuẩn, hoạt động tốt trên mobile
-  const encoded = encodeURIComponent(text);
-  const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encoded}&tl=en&client=tw-ob`;
-  const audio = new Audio(url);
-  audio.playbackRate = selRate;
-  audio.play().catch(()=>{
-    // Fallback về Web Speech API nếu Google TTS bị block
+  // Dùng ResponsiveVoice - giọng chuẩn, hoạt động tốt trên mọi thiết bị
+  if(typeof responsiveVoice!=='undefined' && responsiveVoice.voiceSupport()){
+    responsiveVoice.cancel();
+    responsiveVoice.speak(text, 'US English Female', {rate: selRate});
+  } else {
+    // Fallback Web Speech API
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
     u.lang = 'en-US';
     u.rate = selRate;
     if(appSettings.voiceIndex>=0 && selVoice) u.voice = selVoice;
     setTimeout(()=>speechSynthesis.speak(u), 50);
-  });
+  }
 }
 
 // ═══════════════════════════════════════════
