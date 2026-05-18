@@ -794,6 +794,25 @@ function loadVoices(){
   const all=speechSynthesis.getVoices();
   voices=all.filter(v=>v.lang.startsWith('en'));
   if(!voices.length) voices=all;
+
+  // Ưu tiên giọng tiếng Anh chuẩn trên mobile Android/iOS
+  const preferred=[
+    'Google US English','Google UK English Female','Google UK English Male',
+    'en-US-Neural2','Microsoft David','Microsoft Zira',
+    'Karen','Daniel','Samantha','Aaron','Fred'
+  ];
+  voices.sort((a,b)=>{
+    const ai=preferred.findIndex(p=>a.name.includes(p));
+    const bi=preferred.findIndex(p=>b.name.includes(p));
+    if(ai>=0&&bi<0) return -1;
+    if(bi>=0&&ai<0) return 1;
+    if(ai>=0&&bi>=0) return ai-bi;
+    const aUS=a.lang==='en-US'?0:1;
+    const bUS=b.lang==='en-US'?0:1;
+    if(aUS!==bUS) return aUS-bUS;
+    return (a.localService?0:1)-(b.localService?0:1);
+  });
+
   const sel=document.getElementById('voice-sel');
   if(sel){
     if(voices.length){
@@ -807,7 +826,7 @@ function loadVoices(){
   }
   // Also sync settings selector if open
   const ssel=document.getElementById('setting-voice-sel');
-  if(ssel && voices.length){
+  if(ssel&&voices.length){
     ssel.innerHTML=voices.map((v,i)=>`<option value="${i}">${v.name} (${v.lang})</option>`).join('');
     ssel.value=appSettings.voiceIndex;
   }
