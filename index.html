@@ -726,7 +726,22 @@ function sm2(sm, quality){
   const nextReview=Date.now()+interval*86400000;
   return {ef,interval,reps,nextReview,level};
 }
-function isDue(w){ return w.sm.reps>0 && w.sm.nextReview<=Date.now(); }
+// "Ngày hôm nay" bắt đầu từ 1:00 sáng — từ được tính là đến hạn nếu nextReview <= cuối ngày tùy chỉnh (00:59:59 sáng hôm sau)
+function getCustomDayEnd(){
+  const now=new Date();
+  // Nếu hiện tại là 00:00 – 00:59 (trước 1 giờ sáng), "hôm nay" theo lịch tùy chỉnh vẫn là hôm qua
+  // → cuối ngày tùy chỉnh = 01:00:00 sáng hôm nay
+  // Nếu hiện tại >= 01:00, cuối ngày tùy chỉnh = 01:00:00 sáng hôm sau
+  const boundary=new Date(now.getFullYear(),now.getMonth(),now.getDate(),1,0,0,0);
+  if(now<boundary){
+    // trước 1 giờ sáng → ngày tùy chỉnh chưa sang, dùng boundary hiện tại làm deadline
+    return boundary.getTime();
+  } else {
+    // từ 1 giờ sáng trở đi → deadline là 1 giờ sáng ngày mai
+    return boundary.getTime()+86400000;
+  }
+}
+function isDue(w){ return w.sm.reps>0 && w.sm.nextReview<=getCustomDayEnd(); }
 function dueWords(){ return words.filter(isDue); }
 function lvLabel(l){ return ['🔴 Quên','🟡 Yếu','🔵 Khá','🟢 Thuộc'][l]; }
 function lvClass(l){ return 'lv lv'+l; }
@@ -862,19 +877,21 @@ function goHome(){ showTab('overview'); }
 function renderOverview(){
   const due=[];
   let notLearnedC=0,forgottenC=0,weakC=0,okC=0,masteredC=0,learnedToday=0;
-  const todayTs=new Date().setHours(0,0,0,0);
+  // "Hôm nay" bắt đầu từ 1:00 sáng
+  const customDayEnd=getCustomDayEnd();
+  const customDayStart=customDayEnd-86400000;
   const now=Date.now();
   words.forEach(w=>{
     const {reps,level,nextReview}=w.sm;
     if(reps===0) notLearnedC++;
     else{
-      if(nextReview<=now) due.push(w);
+      if(nextReview<=customDayEnd) due.push(w);
       if(level===0) forgottenC++;
       else if(level===1) weakC++;
       else if(level===2) okC++;
       else masteredC++;
     }
-    if(w.learnedAt&&w.learnedAt>=todayTs) learnedToday++;
+    if(w.learnedAt&&w.learnedAt>=customDayStart) learnedToday++;
   });
 
   document.getElementById('dash-grid').innerHTML=`
